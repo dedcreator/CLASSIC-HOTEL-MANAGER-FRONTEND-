@@ -1,26 +1,62 @@
+/* frontend/app/globals.css */
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Your custom theme variables */
+@theme {
+  --color-primary-red: #E53E3E;
+  --color-primary-dark: #1A1A1A;
+  --color-primary-white: #FFFFFF;
+  --color-secondary-red: #C53030;
+  --color-light-gray: #F7F7F7;
+  --color-border-gray: #E2E2E2;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Custom utility classes */
+@layer utilities {
+  .btn-primary {
+    @apply bg-[#E53E3E] text-white px-4 py-2 rounded-md hover:bg-[#C53030] transition-colors duration-200 font-medium;
+  }
+  
+  .btn-secondary {
+    @apply bg-white text-gray-800 px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-50 transition-colors duration-200 font-medium;
+  }
+  
+  .card {
+    @apply bg-white rounded-lg shadow-md p-6 border border-gray-200;
+  }
+  
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#E53E3E] focus:border-transparent;
+  }
+  
+  .badge-success {
+    @apply px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full;
+  }
+  
+  .badge-warning {
+    @apply px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full;
+  }
+  
+  .badge-danger {
+    @apply px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F7F7F7;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #E53E3E;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C53030;
 }
