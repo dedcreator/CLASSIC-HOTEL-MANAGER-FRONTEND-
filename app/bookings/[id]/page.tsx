@@ -49,12 +49,10 @@ export default function BookingDetailPage() {
   const checkOut = useCheckOut();
   const cancelBooking = useCancelBooking();
 
-  // Log the booking data to see its structure
+  // Log the booking data to see its structure (optional, can remove in production)
   useEffect(() => {
     if (booking) {
       console.log('Booking data received:', booking);
-      console.log('Guest data:', booking.guest);
-      console.log('Room data:', booking.room);
     }
   }, [booking]);
 
@@ -68,11 +66,21 @@ export default function BookingDetailPage() {
   };
 
   const handleCheckIn = async () => {
-    if (!booking?.id) return;
+    const id = booking?.id;
+    
+    if (!id) {
+      toast.error('Booking ID not found');
+      return;
+    }
     
     if (confirm(`Check in ${booking.guest?.first_name || 'guest'}?`)) {
       try {
-        await checkIn.mutateAsync(booking.id);
+        await checkIn.mutateAsync({
+          id: id,
+          paymentData: { 
+            payment_method: 'cash'
+          }
+        });
         toast.success('Guest checked in successfully');
       } catch (error: any) {
         toast.error(error.response?.data?.error || 'Failed to check in');
@@ -81,11 +89,16 @@ export default function BookingDetailPage() {
   };
 
   const handleCheckOut = async () => {
-    if (!booking?.id) return;
+    const id = booking?.id;
+    
+    if (!id) {
+      toast.error('Booking ID not found');
+      return;
+    }
     
     if (confirm(`Check out ${booking.guest?.first_name || 'guest'}?`)) {
       try {
-        await checkOut.mutateAsync(booking.id);
+        await checkOut.mutateAsync(id);
         toast.success('Guest checked out successfully');
       } catch (error: any) {
         toast.error(error.response?.data?.error || 'Failed to check out');
@@ -94,10 +107,15 @@ export default function BookingDetailPage() {
   };
 
   const handleCancel = async () => {
-    if (!booking?.id) return;
+    const id = booking?.id;
+    
+    if (!id) {
+      toast.error('Booking ID not found');
+      return;
+    }
     
     try {
-      await cancelBooking.mutateAsync(booking.id);
+      await cancelBooking.mutateAsync(id);
       setShowCancelConfirm(false);
       toast.success('Booking cancelled');
     } catch (error: any) {
@@ -162,9 +180,9 @@ export default function BookingDetailPage() {
         {/* Back button */}
         <Link
           href="/bookings"
-          className="inline-flex items-center text-gray-600 hover:text-red-600 mb-6"
+          className="inline-flex items-center text-gray-600 hover:text-red-600 mb-6 group"
         >
-          <ArrowLeftIcon className="h-4 w-4 mr-2" />
+          <ArrowLeftIcon className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
           Back to Bookings
         </Link>
 
@@ -178,7 +196,7 @@ export default function BookingDetailPage() {
                 </h1>
                 <button
                   onClick={handleCopyReference}
-                  className="p-1 text-gray-400 hover:text-red-600"
+                  className="p-1 text-gray-400 hover:text-red-600 transition-colors"
                   title="Copy reference"
                 >
                   <DocumentDuplicateIcon className="h-5 w-5" />
@@ -198,7 +216,7 @@ export default function BookingDetailPage() {
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={handlePrint}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
               >
                 <PrinterIcon className="h-4 w-4" />
                 Print
@@ -209,13 +227,13 @@ export default function BookingDetailPage() {
                   <button
                     onClick={handleCheckIn}
                     disabled={checkIn.isPending}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
                   >
                     {checkIn.isPending ? 'Processing...' : 'Check In'}
                   </button>
                   <button
                     onClick={() => setShowCancelConfirm(true)}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                   >
                     Cancel
                   </button>
@@ -226,7 +244,7 @@ export default function BookingDetailPage() {
                 <button
                   onClick={handleCheckOut}
                   disabled={checkOut.isPending}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
                   {checkOut.isPending ? 'Processing...' : 'Check Out'}
                 </button>
@@ -348,14 +366,14 @@ export default function BookingDetailPage() {
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setShowCancelConfirm(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   No, Keep It
                 </button>
                 <button
                   onClick={handleCancel}
                   disabled={cancelBooking.isPending}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
                 >
                   {cancelBooking.isPending ? 'Cancelling...' : 'Yes, Cancel'}
                 </button>
