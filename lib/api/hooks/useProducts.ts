@@ -3,27 +3,21 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../client';
 import { Product, Batch, StockMovement, StockAlert } from '../types';
 import toast from 'react-hot-toast';
-// frontend/lib/api/hooks/useProducts.ts
 
 export const alertApi = {
   getAll: async (params?: any) => {
-    // Change this line:
     const { data } = await api.get<StockAlert[]>('/stock-alerts/', { params });
-    // from: '/low-stock-alerts/'
     return data;
   },
 
   checkAll: async () => {
-    // Change this line:
     const { data } = await api.post('/stock-alerts/check_all/');
   
     return data;
   },
 
   resolve: async (id: string) => {
-    // Change this line:
     const { data } = await api.post<StockAlert>(`/stock-alerts/${id}/resolve/`);
-    // from: `/low-stock-alerts/${id}/resolve/`
     return data;
   },
 };
@@ -109,13 +103,17 @@ export const useCreateProduct = () => {
 export const useUpdateProduct = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: productApi.update,
+    mutationFn: async ({ id, ...data }: { id: string } & Partial<Product>) => {
+      const response = await api.patch(`/products/${id}/`, data);
+      return response.data;
+    },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['product', data.id] });
       toast.success('Product updated successfully');
     },
     onError: (error: any) => {
+      console.error('Update error:', error.response?.data);
       toast.error(error.response?.data?.message || 'Failed to update product');
     },
   });
