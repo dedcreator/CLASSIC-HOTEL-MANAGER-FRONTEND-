@@ -9,11 +9,13 @@ import {
   PlusIcon,
   ExclamationTriangleIcon,
   QrCodeIcon,
+  ClockIcon,
 } from '@heroicons/react/24/outline';
 import { Product } from '@/lib/api/types';
 import { useDeleteProduct, useAddStock } from '@/lib/api/hooks/useProducts';
 import { useAuth } from '@/lib/api/hooks/useAuth';
 import AddStockModal from './AddStockModel';
+import toast from 'react-hot-toast';
 
 interface ProductCardProps {
   product: Product;
@@ -23,15 +25,15 @@ interface ProductCardProps {
 export default function ProductCard({ product, isHighlighted }: ProductCardProps) {
   const [showAddStock, setShowAddStock] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   
   const deleteProduct = useDeleteProduct();
   const addStock = useAddStock();
   const { user } = useAuth();
 
-  // Check if user is manager or CEO
+  // Check permissions
   const canManage = user?.role === 'manager' || user?.role === 'ceo';
-  // Check if user is admin or CEO (for delete permission)
-  const canDelete = user?.role === 'ceo'; // CEO only for delete
+  const canDelete = user?.role === 'ceo';
 
   const categoryColors: Record<string, string> = {
     beer: 'bg-yellow-100 text-yellow-800',
@@ -58,18 +60,27 @@ export default function ProductCard({ product, isHighlighted }: ProductCardProps
     try {
       await deleteProduct.mutateAsync(product.id);
       setShowDeleteConfirm(false);
-    } catch (error) {
+      toast.success(`${product.name} deleted successfully`);
+    } catch (error: any) {
       console.error('Failed to delete:', error);
+      
+      // Check the error message from Django
+      const errorMsg = error.response?.data || error.message;
+      
+      if (errorMsg?.includes('ProtectedError') || errorMsg?.includes('referenced')) {
+        setDeleteError(
+          'This product has stock movement history and cannot be deleted. ' +
+          'You can deactivate it instead to hide it from the inventory.'
+        );
+      } else {
+        setDeleteError('Failed to delete product. Please try again.');
+      }
     }
   };
 
-  const handleAddStock = async (data: { quantity: number; cost_price?: number; notes?: string }) => {
-    await addStock.mutateAsync({
-      id: product.id,
-      ...data,
-      selling_price: product.default_price,
-    });
-    setShowAddStock(false);
+  const handleDeleteClick = () => {
+    setDeleteError(null);
+    setShowDeleteConfirm(true);
   };
 
   return (
@@ -102,8 +113,9 @@ export default function ProductCard({ product, isHighlighted }: ProductCardProps
               {/* Only CEO can delete */}
               {canDelete && (
                 <button
-                  onClick={() => setShowDeleteConfirm(true)}
+                  onClick={handleDeleteClick}
                   className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                  title="Delete product"
                 >
                   <TrashIcon className="h-5 w-5" />
                 </button>
@@ -160,7 +172,6 @@ export default function ProductCard({ product, isHighlighted }: ProductCardProps
               Add Stock
             </button>
           ) : (
-            // For bar staff, show a disabled or hidden button, or just empty space
             <div className="flex-1"></div>
           )}
           <Link
@@ -187,24 +198,78 @@ export default function ProductCard({ product, isHighlighted }: ProductCardProps
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold text-dark-500 mb-2">Delete Product</h3>
-            <p className="text-gray-600 mb-4">
-              Are you sure you want to delete <span className="font-semibold">{product.name}</span>? This action cannot be undone.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="btn-secondary"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleteProduct.isPending}
-                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 disabled:opacity-50"
-              >
-                {deleteProduct.isPending ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
+            
+            {deleteError ? (
+              // Show error message with helpful info
+              <div>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <ExclamationTriangleIcon className="h-6 w-6 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-red-700 font-medium mb-2">Cannot Delete Product</p>
+                      <p className="text-sm text-red-600">{deleteError}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                  <h4 className="text-sm font-medium text-yellow-800 mb-2 flex items-center gap-2">
+                    <ClockIcon className="h-4 w-4" />
+                    Why is this happening?
+                  </h4>
+                  <p className="text-sm text-yellow-700 mb-2">
+                    This product has stock movement history (purchases, sales, restocks). 
+                    Deleting it would break your financial records.
+                  </p>
+                  <p className="text-sm text-yellow-700">
+                    <span className="font-medium">Solution:</span> Instead of deleting, you can:
+                  </p>
+                  <ul className="text-sm text-yellow-700 list-disc pl-5 mt-2 space-y-1">
+                    <li>Set stock to 0 and mark as inactive</li>
+                    <li>Archive the product (recommended)</li>
+                    <li>Contact support for force deletion (not recommended)</li>
+                  </ul>
+                </div>
+                
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="flex-1 btn-secondary"
+                  >
+                    Close
+                  </button>
+                  <Link
+                    href={`/inventory/${product.id}/edit`}
+                    className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-center"
+                  >
+                    Edit Product
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              // Show normal delete confirmation
+              <>
+                <p className="text-gray-600 mb-4">
+                  Are you sure you want to delete <span className="font-semibold">{product.name}</span>? 
+                  This action cannot be undone.
+                </p>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleteProduct.isPending}
+                    className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {deleteProduct.isPending ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

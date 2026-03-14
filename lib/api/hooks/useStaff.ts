@@ -89,6 +89,27 @@ export const useUpdateStaff = () => {
   });
 };
 
+export const useStaffLogs = (staffId: string, filters?: {
+  type?: string;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+}) => {
+  return useQuery({
+    queryKey: ['staff', staffId, 'logs', filters],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (filters?.type && filters.type !== 'all') params.append('type', filters.type);
+      if (filters?.startDate) params.append('start_date', filters.startDate);
+      if (filters?.endDate) params.append('end_date', filters.endDate);
+      if (filters?.limit) params.append('limit', filters.limit.toString());
+      
+      const response = await api.get(`/staff/${staffId}/logs?${params.toString()}`);
+      return response.data;
+    },
+    enabled: !!staffId,
+  });
+};
 export const useDeleteStaff = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -112,5 +133,65 @@ export const useStaffSummary = () => {
   return useQuery({
     queryKey: ['staff', 'summary'],
     queryFn: staffApi.getSummary,
+  });
+};
+
+export const useStaffSales = (staffId: string, params?: {
+  days?: number;
+  startDate?: string;
+  endDate?: string;
+}) => {
+  return useQuery({
+    queryKey: ['staff', staffId, 'sales', params],
+    queryFn: async () => {
+      const queryParams = new URLSearchParams();
+      if (params?.days) queryParams.append('days', params.days.toString());
+      if (params?.startDate) queryParams.append('start_date', params.startDate);
+      if (params?.endDate) queryParams.append('end_date', params.endDate);
+      
+      const response = await api.get(`/auth/staff/${staffId}/sales/?${queryParams.toString()}`);
+      return response.data;
+    },
+    enabled: !!staffId,
+  });
+};
+
+export const useStaffBookings = (staffId: string, params?: {
+  days?: number;
+  startDate?: string;
+  endDate?: string;
+}) => {
+  return useQuery({
+    queryKey: ['staff', staffId, 'bookings', params],
+    queryFn: async () => {
+      const queryParams = new URLSearchParams();
+      if (params?.days) queryParams.append('days', params.days.toString());
+      if (params?.startDate) queryParams.append('start_date', params.startDate);
+      if (params?.endDate) queryParams.append('end_date', params.endDate);
+      
+      const response = await api.get(`/auth/staff/${staffId}/bookings/?${queryParams.toString()}`);
+      return response.data;
+    },
+    enabled: !!staffId,
+  });
+};
+
+export const useStaffActivities = (staffId: string, params?: {
+  days?: number;
+  startDate?: string;
+  endDate?: string;
+}) => {
+  return useQuery({
+    queryKey: ['staff', staffId, 'activities', params],
+    queryFn: async () => {
+      const queryParams = new URLSearchParams();
+      if (params?.days) queryParams.append('days', params.days.toString());
+      if (params?.startDate) queryParams.append('start_date', params.startDate);
+      if (params?.endDate) queryParams.append('end_date', params.endDate);
+      
+      const response = await api.get(`/auth/staff/${staffId}/activities/?${queryParams.toString()}`);
+      return response.data;
+    },
+    enabled: !!staffId,
   });
 };

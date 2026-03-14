@@ -119,16 +119,39 @@ export const useUpdateProduct = () => {
   });
 };
 
+// frontend/lib/api/hooks/useProducts.ts
+
 export const useDeleteProduct = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: productApi.delete,
+    mutationFn: async (id: string) => {
+      try {
+        await api.delete(`/products/${id}/`);
+      } catch (error: any) {
+        // Pass through the error with response data
+        throw error;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success('Product deleted successfully');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to delete product');
+      console.error('Delete error:', error.response?.data);
+      
+      // Extract meaningful error message
+      let errorMessage = 'Failed to delete product';
+      if (error.response?.data) {
+        if (typeof error.response.data === 'object') {
+          errorMessage = Object.values(error.response.data).join(', ');
+        } else {
+          errorMessage = error.response.data;
+        }
+      }
+      
+      // Don't show toast here - let the component handle it
+      // This allows for custom UI in the modal
+      throw error;
     },
   });
 };
