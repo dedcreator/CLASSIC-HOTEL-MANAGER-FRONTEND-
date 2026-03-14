@@ -11,6 +11,7 @@ import {
   ChartBarIcon,
   ClipboardDocumentListIcon,
   UserGroupIcon,
+  CurrencyDollarIcon,
   BellIcon,
   ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
@@ -26,6 +27,7 @@ const navigation = [
   { name: 'Inventory', href: '/inventory', icon: ShoppingBagIcon, roles: ['ceo', 'manager', 'bar_staff'] },
   { name: 'POS', href: '/sales', icon: ChartBarIcon, roles: ['ceo', 'manager', 'bar_staff'] },
   { name: 'Staff', href: '/staff', icon: UserGroupIcon, roles: ['ceo', 'manager'] },
+  { name: 'Expenses', href: '/consumables', icon: CurrencyDollarIcon, roles: ['ceo', 'manager'] },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -69,7 +71,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
                   <div className="flex h-16 shrink-0 items-center border-b border-gray-200">
                     <h1 className="text-2xl font-bold">
-                      <span className="text-red-600">Hotel</span>
+                      <span className="text-red-600">TSG Hotel</span>
                       <span className="text-dark-500">Manager</span>
                     </h1>
                   </div>
@@ -120,7 +122,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4">
           <div className="flex h-16 shrink-0 items-center border-b border-gray-200">
             <h1 className="text-2xl font-bold">
-              <span className="text-red-600">Hotel</span>
+              <span className="text-red-600">TSG Hotel </span>
               <span className="text-dark-500">Manager</span>
             </h1>
           </div>

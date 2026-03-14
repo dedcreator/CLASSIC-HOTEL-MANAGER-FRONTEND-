@@ -295,3 +295,53 @@ export interface BookingStats {
   today_arrivals: number;
   today_departures: number;
 }
+
+// frontend/lib/api/types.ts - Add these types
+
+export interface ExpenseCategory {
+  id: string;
+  name: string;
+  description?: string;
+  expense_count?: number;
+  total_amount?: number;
+  created_at: string;
+}
+
+export interface Expense {
+  id: string;
+  expense_number: string;
+  category: string;
+  category_name?: string;
+  description: string;
+  amount: number;
+  payment_method: 'cash' | 'card' | 'transfer' | 'pos';
+  expense_date: string;
+  receipt_number?: string;
+  notes?: string;
+  is_recurring: boolean;
+  recurring_frequency?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+  created_by_name?: string;
+  updated_by?: string;
+  updated_by_name?: string;
+  can_edit?: boolean;
+  can_delete?: boolean;
+}
+
+export interface ExpenseSummary {
+  total_expenses: number;
+  expense_count: number;
+  by_category: Array<{
+    category__name: string;
+    category__id: string;
+    total: number;
+    count: number;
+  }>;
+  by_month: Array<{
+    month: string;
+    total: number;
+    count: number;
+  }>;
+}
