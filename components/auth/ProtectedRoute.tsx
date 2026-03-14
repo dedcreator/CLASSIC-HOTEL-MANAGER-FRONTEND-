@@ -5,12 +5,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/api/hooks/useAuth';
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-  allowedRoles?: string[];
-}
-
-export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
 
@@ -18,11 +13,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     if (!loading && !user) {
       router.push('/login');
     }
-
-    if (!loading && user && allowedRoles && !allowedRoles.includes(user.role)) {
-      router.push('/unauthorized');
-    }
-  }, [user, loading, router, allowedRoles]);
+  }, [user, loading, router]);
 
   if (loading) {
     return (
@@ -33,10 +24,6 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   }
 
   if (!user) {
-    return null;
-  }
-
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
     return null;
   }
 

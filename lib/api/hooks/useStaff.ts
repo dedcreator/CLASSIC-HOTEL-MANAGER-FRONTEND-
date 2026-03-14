@@ -16,40 +16,33 @@ export const staffApi = {
   },
 
   create: async (staffData: any) => {
-    // Change from '/accounts/staff/' to '/auth/staff/'
     const { data } = await api.post<Staff>('/auth/staff/', staffData);
     return data;
   },
 
   update: async ({ id, ...data }: any) => {
-    // Change from '/accounts/staff/${id}/' to '/auth/staff/${id}/'
     const response = await api.patch<Staff>(`/auth/staff/${id}/`, data);
     return response.data;
   },
 
   delete: async (id: string) => {
-    // Change from '/accounts/staff/${id}/' to '/auth/staff/${id}/'
     await api.delete(`/auth/staff/${id}/`);
   },
 
   activate: async (id: string) => {
-    // Change from '/accounts/staff/${id}/activate/' to '/auth/staff/${id}/activate/'
     await api.post(`/auth/staff/${id}/activate/`);
   },
 
   deactivate: async (id: string) => {
-    // Change from '/accounts/staff/${id}/deactivate/' to '/auth/staff/${id}/deactivate/'
     await api.post(`/auth/staff/${id}/deactivate/`);
   },
 
   getPerformance: async (id: string, days: number = 30) => {
-    // Change from '/accounts/staff/${id}/performance/' to '/auth/staff/${id}/performance/'
     const { data } = await api.get<StaffPerformance>(`/auth/staff/${id}/performance/?days=${days}`);
     return data;
   },
 
   getSummary: async () => {
-    // Change from '/accounts/staff/summary/' to '/auth/staff/summary/'
     const { data } = await api.get<StaffSummary>('/auth/staff/summary/');
     return data;
   },

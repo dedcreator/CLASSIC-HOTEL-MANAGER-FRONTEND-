@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Product } from '@/lib/api/types';
 import { useDeleteProduct, useAddStock } from '@/lib/api/hooks/useProducts';
+import { useAuth } from '@/lib/api/hooks/useAuth';
 import AddStockModal from './AddStockModel';
 
 interface ProductCardProps {
@@ -25,6 +26,12 @@ export default function ProductCard({ product, isHighlighted }: ProductCardProps
   
   const deleteProduct = useDeleteProduct();
   const addStock = useAddStock();
+  const { user } = useAuth();
+
+  // Check if user is manager or CEO
+  const canManage = user?.role === 'manager' || user?.role === 'ceo';
+  // Check if user is admin or CEO (for delete permission)
+  const canDelete = user?.role === 'ceo'; // CEO only for delete
 
   const categoryColors: Record<string, string> = {
     beer: 'bg-yellow-100 text-yellow-800',
@@ -60,7 +67,7 @@ export default function ProductCard({ product, isHighlighted }: ProductCardProps
     await addStock.mutateAsync({
       id: product.id,
       ...data,
-      selling_price: product.default_price, // Add selling_price
+      selling_price: product.default_price,
     });
     setShowAddStock(false);
   };
@@ -82,22 +89,27 @@ export default function ProductCard({ product, isHighlighted }: ProductCardProps
               {product.category}
             </span>
           </div>
-          <div className="flex gap-1">
-            <Link
-              href={`/inventory/${product.id}/edit`}
-              className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-            >
-              <PencilIcon className="h-5 w-5" />
-            </Link>
-            {product.can_delete && (
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
+          
+          {/* Only show edit/delete buttons for managers and CEOs */}
+          {canManage && (
+            <div className="flex gap-1">
+              <Link
+                href={`/inventory/${product.id}/edit`}
                 className="p-1 text-gray-400 hover:text-red-600 transition-colors"
               >
-                <TrashIcon className="h-5 w-5" />
-              </button>
-            )}
-          </div>
+                <PencilIcon className="h-5 w-5" />
+              </Link>
+              {/* Only CEO can delete */}
+              {canDelete && (
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                >
+                  <TrashIcon className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Barcode */}
@@ -138,13 +150,19 @@ export default function ProductCard({ product, isHighlighted }: ProductCardProps
 
         {/* Actions */}
         <div className="flex gap-2">
-          <button
-            onClick={() => setShowAddStock(true)}
-            className="flex-1 btn-secondary text-sm py-2 flex items-center justify-center gap-1"
-          >
-            <PlusIcon className="h-4 w-4" />
-            Add Stock
-          </button>
+          {/* Add Stock button only for managers and CEOs */}
+          {canManage ? (
+            <button
+              onClick={() => setShowAddStock(true)}
+              className="flex-1 btn-secondary text-sm py-2 flex items-center justify-center gap-1"
+            >
+              <PlusIcon className="h-4 w-4" />
+              Add Stock
+            </button>
+          ) : (
+            // For bar staff, show a disabled or hidden button, or just empty space
+            <div className="flex-1"></div>
+          )}
           <Link
             href={`/inventory/${product.id}`}
             className="flex-1 btn-primary text-sm py-2 text-center"
@@ -154,8 +172,8 @@ export default function ProductCard({ product, isHighlighted }: ProductCardProps
         </div>
       </div>
 
-      {/* Add Stock Modal */}
-      {showAddStock && (
+      {/* Add Stock Modal - Only shown for managers/CEOs */}
+      {showAddStock && canManage && (
         <AddStockModal
           product={product}
           onClose={() => setShowAddStock(false)}
@@ -164,8 +182,8 @@ export default function ProductCard({ product, isHighlighted }: ProductCardProps
         />
       )}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
+      {/* Delete Confirmation Modal - Only shown for CEO */}
+      {showDeleteConfirm && canDelete && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold text-dark-500 mb-2">Delete Product</h3>

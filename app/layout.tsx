@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Providers from './providers';
-import { AuthProvider } from '@/lib/api/hooks/useAuth'; // This path should be correct
+import { AuthProvider } from '@/lib/api/hooks/useAuth'; 
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -17,7 +17,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  console.log('✅ RootLayout rendering'); // Add this line
+  console.log('✅ RootLayout rendering'); 
   
   return (
     <html lang="en">

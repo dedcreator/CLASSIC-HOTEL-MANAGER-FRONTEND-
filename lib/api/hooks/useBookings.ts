@@ -150,60 +150,27 @@ export const useBooking = (id: string) => {
   });
 };
 
-// frontend/lib/api/hooks/useBookings.ts
-
 export const useCreateBooking = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (bookingData: any) => {
-      console.log('📤 Sending booking data:', JSON.stringify(bookingData, null, 2));
-      try {
-        const response = await api.post('/bookings/', bookingData);
-        console.log('📥 Full API response:', response);
-        console.log('📥 Response data:', response.data);
-        console.log('📥 Response status:', response.status);
-        
-        // Make sure we're returning the data
-        if (!response.data) {
-          throw new Error('No data received from server');
-        }
-        
-        return response.data;
-      } catch (error) {
-        console.error('❌ API call failed:', error);
-        throw error;
-      }
+      console.log('📤 Sending booking data:', bookingData);
+      const response = await api.post('/bookings/', bookingData);
+      console.log('✅ Response data:', response.data);
+      return response.data; 
     },
     onSuccess: (data) => {
-      console.log('✅ Mutation success with data:', data);
-      if (data && data.id) {
-        console.log('✅ Booking ID:', data.id);
-        queryClient.invalidateQueries({ queryKey: ['bookings'] });
-        queryClient.invalidateQueries({ queryKey: ['rooms'] });
-        toast.success('Booking created successfully!');
-      } else {
-        console.error('❌ Success but no ID in data:', data);
-        toast.success('Booking created but no ID returned?');
-      }
+      console.log('✅ Booking created with ID:', data.id);
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      toast.success('Booking created successfully!');
     },
     onError: (error: any) => {
-      console.error('❌ Mutation error:', error);
-      console.error('❌ Error response:', error.response?.data);
-      console.error('❌ Error status:', error.response?.status);
-      
-      let errorMessage = 'Failed to create booking';
-      if (error.response?.data) {
-        if (typeof error.response.data === 'object') {
-          errorMessage = Object.values(error.response.data).join(', ');
-        } else {
-          errorMessage = error.response.data;
-        }
-      }
-      toast.error(errorMessage);
+      console.error('❌ Booking creation error:', error.response?.data);
+      toast.error(error.response?.data?.message || 'Failed to create booking');
     },
   });
 };
-
 export const useUpdateBooking = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -219,17 +186,21 @@ export const useUpdateBooking = () => {
   });
 };
 
+
 export const useCheckIn = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, paymentData }: { id: string; paymentData: { payment_method: string; amount_paid?: number } }) =>
-      bookingApi.checkIn(id, paymentData),
+    mutationFn: ({ id, paymentData }: { id: string; paymentData: { payment_method: string; amount_paid?: number } }) => {
+      console.log('📤 Check-in API call:', { id, paymentData });
+      return bookingApi.checkIn(id, paymentData);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
       toast.success('Guest checked in successfully!');
     },
     onError: (error: any) => {
+      console.error('❌ Check-in error:', error.response?.data);
       toast.error(error.response?.data?.error || 'Failed to check in');
     },
   });

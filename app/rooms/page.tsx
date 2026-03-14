@@ -12,11 +12,14 @@ import {
   TvIcon,
   ScaleIcon,
   ShieldCheckIcon,
+  ClockIcon,
+  CalendarIcon,
 } from '@heroicons/react/24/outline';
 import { useRooms, useUpdateRoomStatus } from '@/lib/api/hooks/useRooms';
 import RoomCard from './components/RoomCard';
 import RoomFilters from './components/RoomFilters';
 import Layout from '@/components/layout/Layout';
+import ShortRestModal from './components/ShortRestModal';
 
 const statusColors = {
   available: 'bg-green-100 text-green-800 border-green-200',
@@ -30,6 +33,8 @@ export default function RoomsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [selectedRoomForShortRest, setSelectedRoomForShortRest] = useState<any>(null);
+  const [showShortRestModal, setShowShortRestModal] = useState(false);
   
   const { data: rooms, isLoading } = useRooms({});
   const updateStatus = useUpdateRoomStatus();
@@ -60,6 +65,11 @@ export default function RoomsPage() {
     updateStatus.mutate({ id, status: newStatus });
   };
 
+  const handleShortRestClick = (room: any) => {
+    setSelectedRoomForShortRest(room);
+    setShowShortRestModal(true);
+  };
+
   return (
     <Layout>
       <div className="space-y-6 pb-20">
@@ -77,6 +87,7 @@ export default function RoomsPage() {
             Add New Room
           </Link>
         </div>
+        
         {/* Stats Overview */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
@@ -96,6 +107,7 @@ export default function RoomsPage() {
             <p className="text-2xl font-bold text-yellow-600">{maintenanceRooms}</p>
           </div>
         </div>
+        
         {/* Search and Filters */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -136,6 +148,7 @@ export default function RoomsPage() {
               </button>
             </div>
           </div>
+          
           {/* Filter Chips */}
           <RoomFilters
             statusFilter={statusFilter}
@@ -144,6 +157,7 @@ export default function RoomsPage() {
             onTypeChange={setTypeFilter}
           />
         </div>
+        
         {/* Rooms Grid/List */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -171,6 +185,7 @@ export default function RoomsPage() {
                 room={room}
                 onStatusChange={handleStatusChange}
                 isUpdating={updateStatus.isPending}
+                onShortRestClick={handleShortRestClick}
               />
             ))}
           </div>
@@ -182,6 +197,7 @@ export default function RoomsPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Room</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price/Night</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Short Rest</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Capacity</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -195,6 +211,17 @@ export default function RoomsPage() {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600 capitalize">{room.room_type}</td>
                     <td className="px-6 py-4 text-sm font-semibold text-red-600">₦{room.base_price}</td>
+                    <td className="px-6 py-4">
+                      {room.status === 'available' && (
+                        <button
+                          onClick={() => handleShortRestClick(room)}
+                          className="bg-purple-600 text-white text-xs px-3 py-1 rounded-full hover:bg-purple-700 transition-colors flex items-center gap-1"
+                        >
+                          <ClockIcon className="h-3 w-3" />
+                          Short Rest
+                        </button>
+                      )}
+                    </td>
                     <td className="px-6 py-4">
                       <select
                         value={room.status}
@@ -225,6 +252,17 @@ export default function RoomsPage() {
           </div>
         )}
       </div>
+
+      {/* Short Rest Modal */}
+      {showShortRestModal && selectedRoomForShortRest && (
+        <ShortRestModal
+          room={selectedRoomForShortRest}
+          onClose={() => {
+            setShowShortRestModal(false);
+            setSelectedRoomForShortRest(null);
+          }}
+        />
+      )}
     </Layout>
   );
 }

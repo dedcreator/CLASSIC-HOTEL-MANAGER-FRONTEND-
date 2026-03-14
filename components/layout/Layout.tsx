@@ -20,13 +20,12 @@ import { useAuth } from '@/lib/api/hooks/useAuth';
 import Header from './Header';
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: HomeIcon, roles: ['ceo', 'manager', 'admin'] },
+  { name: 'Dashboard', href: '/', icon: HomeIcon, roles: ['ceo', 'manager', 'admin', 'receptionist', 'bar_staff'] },
   { name: 'Rooms', href: '/rooms', icon: BuildingOfficeIcon, roles: ['ceo', 'manager', 'receptionist', 'housekeeping'] },
   { name: 'Bookings', href: '/bookings', icon: ClipboardDocumentListIcon, roles: ['ceo', 'manager', 'receptionist'] },
   { name: 'Inventory', href: '/inventory', icon: ShoppingBagIcon, roles: ['ceo', 'manager', 'bar_staff'] },
   { name: 'POS', href: '/sales', icon: ChartBarIcon, roles: ['ceo', 'manager', 'bar_staff'] },
   { name: 'Staff', href: '/staff', icon: UserGroupIcon, roles: ['ceo', 'manager'] },
-  { name: 'Reports', href: '/reports', icon: ChartBarIcon, roles: ['ceo', 'manager', 'admin'] },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {

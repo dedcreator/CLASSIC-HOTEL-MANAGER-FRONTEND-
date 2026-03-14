@@ -5,10 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { useState } from 'react';
 
-console.log('✅ providers.tsx is loaded'); // Add this line
-
 export default function Providers({ children }: { children: React.ReactNode }) {
-  console.log('✅ Providers rendering'); // Add this line
   
   const [queryClient] = useState(
     () =>

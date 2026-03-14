@@ -13,6 +13,7 @@ import {
   PencilIcon,
   TrashIcon,
   CalendarIcon,
+  ClockIcon, // Add this import
 } from '@heroicons/react/24/outline';
 import { Room } from '@/lib/api/types';
 import { useDeleteRoom } from '@/lib/api/hooks/useRooms';
@@ -21,6 +22,7 @@ interface RoomCardProps {
   room: Room;
   onStatusChange: (id: string, status: string) => void;
   isUpdating: boolean;
+  onShortRestClick?: (room: Room) => void; // Add this prop
 }
 
 const statusColors = {
@@ -42,7 +44,7 @@ const roomIcons = {
   deluxe: '🏠',
 };
 
-export default function RoomCard({ room, onStatusChange, isUpdating }: RoomCardProps) {
+export default function RoomCard({ room, onStatusChange, isUpdating, onShortRestClick }: RoomCardProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const deleteRoom = useDeleteRoom();
 
@@ -125,18 +127,35 @@ export default function RoomCard({ room, onStatusChange, isUpdating }: RoomCardP
             <ShieldCheckIcon className="h-4 w-4" title="Safe" />
           </div>
 
-          {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-2 pt-2">
-          <Link
-            href={`/rooms/${room.id}/bookings`}
-            className="flex-1 bg-red-600 text-white text-sm py-2 rounded-lg hover:bg-red-700 text-center flex items-center justify-center gap-1"
-          >
-            <CalendarIcon className="h-4 w-4" />
-            Bookings
-          </Link>
+          {/* Action Buttons - Now with 3 columns when available */}
+          <div className={`grid ${room.status === 'available' && onShortRestClick ? 'grid-cols-3' : 'grid-cols-2'} gap-2 pt-2`}>
+            {/* Short Rest Button - Only show for available rooms */}
+            {room.status === 'available' && onShortRestClick && (
+              <button
+                onClick={() => onShortRestClick(room)}
+                className="bg-red-700 text-white text-sm py-2 rounded-lg hover:bg-red-500 transition-colors flex items-center justify-center gap-1"
+                title="Short rest (hourly booking)"
+              >
+                <ClockIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Short Rest</span>
+                <span className="sm:hidden">Rest</span>
+              </button>
+            )}
+            
+            {/* Bookings Button */}
+            <Link
+              href={`/rooms/${room.id}/bookings`}
+              className="bg-red-600 text-white text-sm py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-1"
+            >
+              <CalendarIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">Bookings</span>
+              <span className="sm:hidden">Book</span>
+            </Link>
+            
+            {/* Details Button */}
             <Link
               href={`/rooms/${room.id}`}
-              className="btn-secondary text-sm py-2 text-center"
+              className="bg-gray-100 text-gray-700 text-sm py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center"
             >
               Details
             </Link>
