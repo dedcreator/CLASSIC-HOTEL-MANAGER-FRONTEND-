@@ -9,10 +9,8 @@ import {
   HomeIcon,
   ShoppingCartIcon,
   UserGroupIcon,
-  ArrowTrendingUpIcon,
   ExclamationTriangleIcon,
   SparklesIcon,
-  ClockIcon,
 } from '@heroicons/react/24/outline';
 import {
   AreaChart,
@@ -25,12 +23,8 @@ import {
   PieChart,
   Pie,
   Cell,
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
 } from 'recharts';
-import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
+import { ValueType } from 'recharts/types/component/DefaultTooltipContent';
 import { useProducts, useAlerts } from '@/lib/api/hooks/useProducts';
 import { useSales, useTodaySales, useRevenueReport } from '@/lib/api/hooks/useSales';
 import { useBookings, useTodayBookings, useBookingStats } from '@/lib/api/hooks/useBookings';
@@ -56,17 +50,26 @@ export default function Dashboard() {
   const { data: products } = useProducts({});
   const { data: alerts } = useAlerts({ resolved: false });
   const { data: sales } = useSales();
-  const { data: todaySales } = useTodaySales();
+  const { data: todaySales, refetch: refetchTodaySales } = useTodaySales();
   const { data: revenueReport } = useRevenueReport(dateRange === 'week' ? 'weekly' : 'monthly');
   const { data: bookings } = useBookings({});
   const { data: rooms } = useRooms({});
-  const { data: todayBookings } = useTodayBookings();
+  const { data: todayBookings, refetch: refetchTodayBookings } = useTodayBookings();
   const { data: bookingStats } = useBookingStats();
+
+  // Refetch data periodically to keep revenue updated
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetchTodaySales();
+      refetchTodayBookings();
+    }, 30000); // Refresh every 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [refetchTodaySales, refetchTodayBookings]);
 
   // Process revenue data for chart
   useEffect(() => {
     if (revenueReport && revenueReport.length > 0) {
-      // Format revenue data for chart
       const formattedData = revenueReport.map((item: any) => ({
         name: item.name || item.month || item.week || item.date,
         revenue: Number(item.revenue) || 0,
@@ -84,7 +87,7 @@ export default function Dashboard() {
   const totalProducts = products?.length || 0;
   const lowStockCount = alerts?.length || 0;
   
-  // Today's revenue
+  // Today's revenue - UPDATING REAL-TIME
   const todayRevenue = todaySales?.summary?.total_sales || 0;
   const todayTransactions = todaySales?.summary?.count || 0;
   
@@ -96,14 +99,9 @@ export default function Dashboard() {
   const occupancyRate = totalRooms ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
 
   // Calculate booking stats
-  const totalBookings = bookings?.length || 0;
   const activeGuests = bookings?.filter((b: any) => b.status === 'checked_in').length || 0;
   const todayArrivals = todayBookings?.arrivals?.length || 0;
   const todayDepartures = todayBookings?.departures?.length || 0;
-
-  // Calculate bar sales (actual from sales data)
-  const barSales = sales?.filter((s: any) => s.payment_method === 'cash' || s.payment_method === 'card')
-    .reduce((sum: number, s: any) => sum + s.total_amount, 0) || 0;
 
   // Calculate total revenue (all time)
   const totalRevenue = sales?.reduce((sum: number, s: any) => sum + s.total_amount, 0) || 0;
@@ -113,7 +111,7 @@ export default function Dashboard() {
     {
       name: "Today's Revenue",
       value: `₦${Number(todayRevenue).toLocaleString()}`,
-      change: todayTransactions > 0 ? `${todayTransactions} transactions` : 'No sales yet',
+      change: todayTransactions > 0 ? `${todayTransactions} transactions today` : 'No sales yet',
       icon: CurrencyDollarIcon,
       iconBg: 'bg-red-100',
       iconColor: 'text-red-600',
@@ -148,28 +146,6 @@ export default function Dashboard() {
     },
   ];
 
-  // Recent activity combining sales and bookings
-  const recentActivity = [
-    ...(sales?.slice(0, 3).map((sale: any) => ({
-      id: `sale-${sale.id}`,
-      time: new Date(sale.created_at).toLocaleTimeString(),
-      action: 'Sale',
-      type: 'sale',
-      guest: sale.guest_name || 'Bar Customer',
-      amount: `₦${Number(sale.total_amount).toLocaleString()}`,
-      link: `/sales/${sale.id}`,
-    })) || []),
-    ...(bookings?.slice(0, 3).map((booking: any) => ({
-      id: `booking-${booking.id}`,
-      time: new Date(booking.created_at).toLocaleTimeString(),
-      action: booking.status === 'checked_in' ? 'Check-in' : 'Booking',
-      type: 'booking',
-      guest: `${booking.guest?.first_name || ''} ${booking.guest?.last_name || ''}`.trim() || 'Guest',
-      amount: `Room ${booking.room?.room_number || 'N/A'}`,
-      link: `/bookings/${booking.id}`,
-    })) || []),
-  ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 5);
-
   // Room type distribution for pie chart
   const roomTypeData = rooms?.reduce((acc: any[], room: any) => {
     const existing = acc.find(item => item.name === room.room_type);
@@ -180,22 +156,6 @@ export default function Dashboard() {
         name: room.room_type === 'standard' ? 'Standard' : 'Duplex',
         value: 1,
         color: room.room_type === 'standard' ? COLORS.primary : COLORS.purple,
-      });
-    }
-    return acc;
-  }, []) || [];
-
-  // Revenue by payment method
-  const paymentMethodData = sales?.reduce((acc: any[], sale: any) => {
-    const existing = acc.find(item => item.name === sale.payment_method);
-    if (existing) {
-      existing.value += sale.total_amount;
-    } else {
-      acc.push({
-        name: sale.payment_method || 'cash',
-        value: sale.total_amount,
-        color: sale.payment_method === 'cash' ? COLORS.primary : 
-               sale.payment_method === 'card' ? COLORS.purple : COLORS.success
       });
     }
     return acc;
@@ -386,7 +346,7 @@ export default function Dashboard() {
 
         {/* Second Row - Today's Schedule and Quick Stats */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Today's Schedule */}
+          {/* Today's Schedule - Shows real arrivals/departures */}
           <div className="lg:col-span-1">
             <TodaySchedule />
           </div>
@@ -441,59 +401,6 @@ export default function Dashboard() {
                 <span className="bg-white/20 px-2 py-1 rounded">{lowStockCount} low stock</span>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-dark-500">Recent Activity</h2>
-            <Link href="/activity" className="text-sm text-red-600 hover:text-red-700 font-medium">
-              View All
-            </Link>
-          </div>
-          
-          {/* Activity Timeline */}
-          <div className="space-y-3">
-            {recentActivity.length > 0 ? (
-              recentActivity.map((activity) => (
-                <Link
-                  key={activity.id}
-                  href={activity.link}
-                  className="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        activity.type === 'sale' ? 'bg-green-100' : 'bg-blue-100'
-                      }`}>
-                        {activity.type === 'sale' ? '💰' : '📅'}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-dark-500">{activity.guest}</p>
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                          <span>{activity.time}</span>
-                          <span>•</span>
-                          <span className={`px-2 py-0.5 rounded-full ${
-                            activity.action === 'Sale' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-                          }`}>
-                            {activity.action}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-red-600">{activity.amount}</p>
-                    </div>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <ClockIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                <p className="text-gray-500">No recent activity</p>
-              </div>
-            )}
           </div>
         </div>
 

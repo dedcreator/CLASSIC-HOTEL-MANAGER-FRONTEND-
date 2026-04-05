@@ -16,11 +16,26 @@ interface User {
   phone?: string;
 }
 
+interface UpdateProfileData {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  username?: string;
+  password?: string;
+}
+
+interface ChangePasswordData {
+  current_password: string;
+  new_password: string;
+}
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (data: UpdateProfileData) => Promise<void>;
+  changePassword: (data: ChangePasswordData) => Promise<void>;
   hasPermission: (allowedRoles: string[]) => boolean;
 }
 
@@ -55,107 +70,85 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-const login = async (username: string, password: string) => {
-  try {
-    const response = await api.post('/auth/login/', { username, password });
-    const data = response.data;
-    
-    console.log('✅ Login successful! Response:', data); // Check what you're getting
-
-    // Check different possible response structures
-    let accessToken, refreshToken, userData;
-
-    // Structure 1: { access: "...", refresh: "...", user: {...} }
-    if (data.access && data.refresh) {
-      accessToken = data.access;
-      refreshToken = data.refresh;
-      userData = data.user;
-    }
-    // Structure 2: { token: "...", refresh: "...", user: {...} }
-    else if (data.token && data.refresh) {
-      accessToken = data.token;
-      refreshToken = data.refresh;
-      userData = data.user;
-    }
-    // Structure 3: { access_token: "...", refresh_token: "...", user: {...} }
-    else if (data.access_token && data.refresh_token) {
-      accessToken = data.access_token;
-      refreshToken = data.refresh_token;
-      userData = data.user;
-    }
-    // Structure 4: Just tokens, user data in separate field
-    else if (data.access && data.refresh) {
-      accessToken = data.access;
-      refreshToken = data.refresh;
-      // Try to get user from different possible locations
-      userData = data.user || data.profile || data.data;
-    }
-    // Structure 5: Unknown format - log it and try to find tokens
-    else {
-      console.warn('Unknown response format:', data);
-      // Try to find any token-like properties
-      const possibleToken = data.access || data.token || data.access_token;
-      const possibleRefresh = data.refresh || data.refresh_token;
+  const login = async (username: string, password: string) => {
+    try {
+      const response = await api.post('/auth/login/', { username, password });
+      const data = response.data;
       
-      if (possibleToken && possibleRefresh) {
-        accessToken = possibleToken;
-        refreshToken = possibleRefresh;
-        userData = data.user || data.profile || null;
+      console.log('✅ Login successful! Response:', data);
+
+      let accessToken, refreshToken, userData;
+
+      if (data.access && data.refresh) {
+        accessToken = data.access;
+        refreshToken = data.refresh;
+        userData = data.user;
+      } else if (data.token && data.refresh) {
+        accessToken = data.token;
+        refreshToken = data.refresh;
+        userData = data.user;
+      } else if (data.access_token && data.refresh_token) {
+        accessToken = data.access_token;
+        refreshToken = data.refresh_token;
+        userData = data.user;
       } else {
-        throw new Error('Could not find authentication tokens in response');
+        console.warn('Unknown response format:', data);
+        const possibleToken = data.access || data.token || data.access_token;
+        const possibleRefresh = data.refresh || data.refresh_token;
+        
+        if (possibleToken && possibleRefresh) {
+          accessToken = possibleToken;
+          refreshToken = possibleRefresh;
+          userData = data.user || data.profile || null;
+        } else {
+          throw new Error('Could not find authentication tokens in response');
+        }
       }
-    }
 
-    // Store tokens
-    localStorage.setItem('access_token', accessToken);
-    localStorage.setItem('refresh_token', refreshToken);
-    api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+      localStorage.setItem('access_token', accessToken);
+      localStorage.setItem('refresh_token', refreshToken);
+      api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 
-    // Handle user data
-    if (userData) {
-      setUser(userData);
-      toast.success(`Welcome back, ${userData.first_name || 'User'}!`);
+      if (userData) {
+        setUser(userData);
+        toast.success(`Welcome back, ${userData.first_name || 'User'}!`);
 
-      // Redirect based on role
-      if (userData.role === 'bar_staff') {
-        router.push('/sales');
-      } else if (userData.role === 'receptionist') {
-        router.push('/bookings');
+        if (userData.role === 'bar_staff') {
+          router.push('/sales');
+        } else if (userData.role === 'receptionist') {
+          router.push('/bookings');
+        } else {
+          router.push('/');
+        }
       } else {
-        router.push('/');
+        try {
+          const userResponse = await api.get('/auth/me/');
+          setUser(userResponse.data);
+          toast.success('Login successful!');
+          router.push('/');
+        } catch (userError) {
+          console.error('Failed to fetch user data:', userError);
+          router.push('/');
+        }
       }
-    } else {
-      // If no user data, fetch it
-      try {
-        const userResponse = await api.get('/auth/me/');
-        setUser(userResponse.data);
-        toast.success('Login successful!');
-        router.push('/');
-      } catch (userError) {
-        console.error('Failed to fetch user data:', userError);
-        // Still redirect even if user fetch fails
-        router.push('/');
-      }
+    } catch (error: any) {
+      console.error('❌ Login error:', error);
+      
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          error.message || 
+                          'Login failed';
+      
+      toast.error(errorMessage);
+      throw error;
     }
-  } catch (error: any) {
-    console.error('❌ Login error:', error);
-    
-    const errorMessage = error.response?.data?.error || 
-                        error.response?.data?.message || 
-                        error.message || 
-                        'Login failed';
-    
-    toast.error(errorMessage);
-    throw error;
-  }
-};
+  };
 
   const logout = async () => {
     try {
       const refresh = localStorage.getItem('refresh_token');
       if (refresh) {
         await api.post('/auth/logout/', { refresh }).catch(() => {
-          // Silently fail if logout endpoint doesn't exist
           console.log('Logout endpoint not available');
         });
       }
@@ -171,13 +164,59 @@ const login = async (username: string, password: string) => {
     }
   };
 
+  // Update profile method
+  const updateProfile = async (data: UpdateProfileData) => {
+    try {
+      const response = await api.put('/auth/update-profile/', data);
+      const updatedUser = response.data.user;
+      
+      // Update user state
+      setUser(updatedUser);
+      
+      // Update localStorage
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      toast.success(response.data.message || 'Profile updated successfully');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Failed to update profile';
+      toast.error(errorMessage);
+      throw error;
+    }
+  };
+
+  // Change password method
+  const changePassword = async (data: ChangePasswordData) => {
+    try {
+      const response = await api.post('/auth/change-password/', data);
+      toast.success(response.data.message || 'Password changed successfully');
+      
+      // Optional: Auto logout after password change
+      setTimeout(() => {
+        toast.success('Please login with your new password');
+        logout();
+      }, 2000);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Failed to change password';
+      toast.error(errorMessage);
+      throw error;
+    }
+  };
+
   const hasPermission = (allowedRoles: string[]) => {
     if (!user) return false;
     return allowedRoles.includes(user.role);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, hasPermission }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      login, 
+      logout, 
+      updateProfile,
+      changePassword,
+      hasPermission 
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -68,18 +68,6 @@ export default function Header({ setSidebarOpen }: HeaderProps) {
               <Menu.Item>
                 {({ active }) => (
                   <Link
-                    href="/profile"
-                    className={`block px-3 py-1 text-sm leading-6 ${
-                      active ? 'bg-red-50 text-red-600' : 'text-gray-900'
-                    }`}
-                  >
-                    Your Profile
-                  </Link>
-                )}
-              </Menu.Item>
-              <Menu.Item>
-                {({ active }) => (
-                  <Link
                     href="/settings"
                     className={`flex items-center gap-x-2 px-3 py-1 text-sm leading-6 ${
                       active ? 'bg-red-50 text-red-600' : 'text-gray-900'

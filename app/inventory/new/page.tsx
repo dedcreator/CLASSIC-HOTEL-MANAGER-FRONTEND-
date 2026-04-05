@@ -6,10 +6,16 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeftIcon, StarIcon } from '@heroicons/react/24/outline';
 import { useCreateProduct } from '@/lib/api/hooks/useProducts';
+import { useAuth } from '@/lib/api/hooks/useAuth';
+import toast from 'react-hot-toast';
 
 export default function NewProductPage() {
   const router = useRouter();
   const createProduct = useCreateProduct();
+  const { user } = useAuth();
+
+  // Check if user has permission to create products
+  const canCreate = user?.role === 'ceo' || user?.role === 'manager';
 
   const [formData, setFormData] = useState({
     name: '',
@@ -18,19 +24,19 @@ export default function NewProductPage() {
     unit: 'unit',
     barcode: '',
     min_stock_level: '10',
-    location: 'bar', // Add location field
-    is_premium: false, // Add premium field
+    location: 'bar',
+    is_premium: false,
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const categories = [
-    // Bar categories
     { value: 'beer', label: 'Beer' },
+    { value: 'wine', label: 'Wine' },
     { value: 'spirit', label: 'Spirit' },
     { value: 'soft_drink', label: 'Soft Drink' },
     { value: 'juice', label: 'Juice' },
-    // Lounge categories
     { value: 'cocktail', label: 'Cocktail' },
-    { value: 'wine', label: 'Wine' },
     { value: 'champagne', label: 'Champagne' },
     { value: 'coffee', label: 'Coffee' },
     { value: 'tea', label: 'Tea' },
@@ -59,23 +65,84 @@ export default function NewProductPage() {
     { value: 'both', label: 'Both' },
   ];
 
+  // If user doesn't have permission, show access denied
+  if (!canCreate) {
+    return (
+      <div className="max-w-2xl mx-auto pb-20">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <h2 className="text-lg font-semibold text-red-800 mb-2">Access Denied</h2>
+          <p className="text-sm text-red-600">
+            You don't have permission to create new products. Only CEOs and Managers can add products.
+          </p>
+          <Link
+            href="/inventory"
+            className="inline-block mt-4 text-red-600 hover:text-red-700 font-medium"
+          >
+            Back to Inventory
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
+    
+    // Validate required fields
+    if (!formData.name) {
+      toast.error('Product name is required');
+      return;
+    }
+    
+    if (!formData.default_price || parseFloat(formData.default_price) <= 0) {
+      toast.error('Valid price is required');
+      return;
+    }
     
     try {
-      await createProduct.mutateAsync({
+      const productData = {
         name: formData.name,
         category: formData.category,
         default_price: parseFloat(formData.default_price),
         unit: formData.unit,
-        barcode: formData.barcode || undefined,
+        barcode: formData.barcode || null,
         min_stock_level: parseInt(formData.min_stock_level),
         location: formData.location,
         is_premium: formData.is_premium,
-      });
+      };
+      
+      console.log('Sending product data:', productData);
+      
+      await createProduct.mutateAsync(productData);
+      toast.success('Product created successfully!');
       router.push('/inventory');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create product:', error);
+      
+      // Handle validation errors from backend
+      if (error.response?.data) {
+        const backendErrors = error.response.data;
+        
+        if (typeof backendErrors === 'object') {
+          // Format validation errors
+          const errorMessages: string[] = [];
+          Object.keys(backendErrors).forEach(key => {
+            const messages = backendErrors[key];
+            if (Array.isArray(messages)) {
+              errorMessages.push(`${key}: ${messages.join(', ')}`);
+            } else {
+              errorMessages.push(`${key}: ${messages}`);
+            }
+          });
+          toast.error(errorMessages.join('\n') || 'Failed to create product');
+          setErrors(backendErrors);
+        } else {
+          toast.error(backendErrors.message || 'Failed to create product');
+        }
+      } else {
+        toast.error('Failed to create product. Please try again.');
+      }
     }
   };
 
@@ -85,6 +152,10 @@ export default function NewProductPage() {
       ...prev,
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
     }));
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
   };
 
   return (
@@ -115,9 +186,12 @@ export default function NewProductPage() {
               value={formData.name}
               onChange={handleChange}
               required
-              className="input-field"
+              className={`input-field ${errors.name ? 'border-red-500' : ''}`}
               placeholder="e.g., Guinness, Jameson, Coca-Cola"
             />
+            {errors.name && (
+              <p className="mt-1 text-xs text-red-600">{errors.name}</p>
+            )}
           </div>
 
           {/* Location Selection */}

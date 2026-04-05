@@ -38,12 +38,6 @@ export default function LoginPage() {
             <span className="text-dark-500">Manager</span>
           </h1>
           <h2 className="mt-6 text-2xl font-semibold text-dark-500">Sign in to your account</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Or{' '}
-            <Link href="/register" className="font-medium text-red-600 hover:text-red-500">
-              request a new account
-            </Link>
-          </p>
         </div>
       </div>
 
@@ -111,7 +105,7 @@ export default function LoginPage() {
               </div>
 
               <div className="text-sm">
-                <a href="#" className="font-medium text-red-600 hover:text-red-500">
+                <a href="/forgot-password" className="font-medium text-red-600 hover:text-red-500">
                   Forgot your password?
                 </a>
               </div>

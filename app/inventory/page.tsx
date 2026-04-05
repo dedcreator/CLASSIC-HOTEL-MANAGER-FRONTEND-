@@ -15,6 +15,7 @@ import { useAuth } from '@/lib/api/hooks/useAuth';
 import { Product } from '@/lib/api/types';
 import ProductCard from './components/ProductCard';
 import LowStockAlert from './components/LowStockAlert';
+import AddStockModal from './components/AddStockModel';
 import BarcodeScanner from './components/BarcodeScanner';
 import Layout from '@/components/layout/Layout';
 

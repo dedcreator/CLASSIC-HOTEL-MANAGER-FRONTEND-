@@ -1,7 +1,7 @@
 // frontend/app/rooms/components/ShortRestModal.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   XMarkIcon, 
@@ -37,8 +37,11 @@ export default function ShortRestModal({ room, onClose }: ShortRestModalProps) {
     phone: '',
   });
 
-  // Short rest options
-  const [duration, setDuration] = useState<'2hours' | '4hours' | '6hours' | 'fullday'>('4hours');
+  // Fixed short rest pricing
+  const SHORT_REST_PRICE = 8000;
+  const VAT = SHORT_REST_PRICE * 0.075; // 600
+  const TOTAL_PRICE = SHORT_REST_PRICE + VAT; // 8600
+  
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
   const [amountPaid, setAmountPaid] = useState<string>('');
 
@@ -58,25 +61,9 @@ export default function ShortRestModal({ room, onClose }: ShortRestModalProps) {
     }).format(price);
   };
 
-  // Calculate price based on duration
-  const getPrice = () => {
-    const basePrice = room.base_price;
-    switch(duration) {
-      case '2hours': return Math.round(basePrice * 0.3);
-      case '4hours': return Math.round(basePrice * 0.5);
-      case '6hours': return Math.round(basePrice * 0.7);
-      case 'fullday': return basePrice;
-      default: return basePrice * 0.5;
-    }
-  };
-
-  const price = getPrice();
-  const tax = price * 0.075;
-  const total = price + tax;
-
   const calculateChange = () => {
     const paid = parseFloat(amountPaid) || 0;
-    return formatPrice(paid - total);
+    return formatPrice(paid - TOTAL_PRICE);
   };
 
   const validateGuestInfo = () => {
@@ -102,7 +89,7 @@ export default function ShortRestModal({ room, onClose }: ShortRestModalProps) {
   };
 
   const validatePayment = () => {
-    if (paymentMethod === 'cash' && (!amountPaid || parseFloat(amountPaid) < total)) {
+    if (paymentMethod === 'cash' && (!amountPaid || parseFloat(amountPaid) < TOTAL_PRICE)) {
       toast.error('Amount paid must be at least the total amount');
       return false;
     }
@@ -148,41 +135,20 @@ export default function ShortRestModal({ room, onClose }: ShortRestModalProps) {
         guestName = `${guestData.first_name} ${guestData.last_name}`;
       }
 
-      // Calculate check-out time based on duration
-      const checkInDate = new Date().toISOString().split('T')[0];
-      let checkOut = new Date();
-      
-      switch(duration) {
-        case '2hours':
-          checkOut.setHours(checkOut.getHours() + 2);
-          break;
-        case '4hours':
-          checkOut.setHours(checkOut.getHours() + 4);
-          break;
-        case '6hours':
-          checkOut.setHours(checkOut.getHours() + 6);
-          break;
-        case 'fullday':
-          checkOut.setDate(checkOut.getDate() + 1);
-          break;
-      }
-      
-      const checkOutStr = checkOut.toISOString().split('T')[0];
-      
-      // Calculate nights (must be at least 1 for the database)
-      const totalNights = 1; // Always 1 for any booking
+      // Fixed values for short rest - 2 hours only
+      const today = new Date().toISOString().split('T')[0];
 
       // Step 2: Create booking
       const bookingData = {
         guest: guestId,
         room: room.id,
-        check_in: checkInDate,
-        check_out: checkOutStr,
+        check_in: today,
+        check_out: today, // Same day checkout for short rest
         adults: 1,
         children: 0,
-        total_nights: totalNights,
-        total_amount: total,
-        special_requests: `Short rest - ${duration}`,
+        total_nights: 1,
+        total_amount: TOTAL_PRICE,
+        special_requests: 'Short rest - 2 hours',
         status: 'confirmed',
         payment_status: 'pending',
       };
@@ -192,15 +158,13 @@ export default function ShortRestModal({ room, onClose }: ShortRestModalProps) {
       const booking = await createBooking.mutateAsync(bookingData);
       console.log('✅ Booking created:', booking);
 
-      // Extract booking ID from response (handles different response formats)
+      // Extract booking ID from response
       const bookingId = booking?.id || booking?.booking_id;
       
       if (!bookingId) {
         console.error('❌ Booking has no ID:', booking);
         toast.error('Booking created but no ID returned');
-        
-        // Still show success for the booking itself
-        toast.success(`${guestName} booked successfully for ${duration}!`);
+        toast.success(`${guestName} booked successfully for 2 hours!`);
         onClose();
         router.refresh();
         return;
@@ -211,14 +175,14 @@ export default function ShortRestModal({ room, onClose }: ShortRestModalProps) {
         id: bookingId,
         paymentData: {
           payment_method: paymentMethod,
-          amount_paid: paymentMethod === 'cash' ? parseFloat(amountPaid) : undefined,
+          amount_paid: paymentMethod === 'cash' ? parseFloat(amountPaid) : TOTAL_PRICE,
         },
       };
       
       console.log('📤 Checking in with:', checkInData);
       await checkInMutation.mutateAsync(checkInData);
 
-      toast.success(`${guestName} checked in successfully for ${duration}!`);
+      toast.success(`${guestName} checked in successfully for 2 hours!`);
       onClose();
       router.refresh();
       
@@ -436,48 +400,37 @@ export default function ShortRestModal({ room, onClose }: ShortRestModalProps) {
           </div>
         )}
 
-        {/* Step 2: Duration & Payment */}
+        {/* Step 2: Payment - Fixed 2 Hours */}
         {step === 2 && (
           <div className="p-6 space-y-4">
-            <h3 className="font-semibold text-gray-900">Select Duration</h3>
-            
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { id: '2hours', label: '2 Hours', price: Math.round(room.base_price * 0.3) },
-                { id: '4hours', label: '4 Hours', price: Math.round(room.base_price * 0.5) },
-                { id: '6hours', label: '6 Hours', price: Math.round(room.base_price * 0.7) },
-                { id: 'fullday', label: 'Full Day', price: room.base_price },
-              ].map((option) => (
-                <button
-                  key={option.id}
-                  onClick={() => setDuration(option.id as any)}
-                  className={`p-3 rounded-lg border-2 text-left transition-all ${
-                    duration === option.id
-                      ? 'border-red-500 bg-red-50'
-                      : 'border-gray-200 hover:border-red-300'
-                  }`}
-                >
-                  <p className="font-semibold">{option.label}</p>
-                  <p className="text-sm text-red-600 font-medium">{formatPrice(option.price)}</p>
-                </button>
-              ))}
+            {/* Fixed Duration Display */}
+            <div className="bg-red-50 rounded-lg p-4 border border-red-100">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <ClockIcon className="h-5 w-5 text-red-600" />
+                  <h3 className="font-semibold text-gray-900">Short Rest Package</h3>
+                </div>
+                <span className="text-sm font-medium text-red-600">2 Hours</span>
+              </div>
+              <p className="text-2xl font-bold text-red-600 mb-1">₦{SHORT_REST_PRICE.toLocaleString()}</p>
+              <p className="text-xs text-gray-600">+ VAT (7.5%) = ₦{TOTAL_PRICE.toLocaleString()} total</p>
             </div>
 
-            {/* Price Breakdown - Red theme */}
-            <div className="bg-gray-50 rounded-lg p-4 mt-4 border border-gray-200">
+            {/* Price Breakdown */}
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <h4 className="font-semibold mb-2">Price Details</h4>
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Room charge</span>
-                  <span>{formatPrice(price)}</span>
+                  <span className="text-gray-600">Short rest (2 hours)</span>
+                  <span>₦{SHORT_REST_PRICE.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">VAT (7.5%)</span>
-                  <span>{formatPrice(tax)}</span>
+                  <span>₦{VAT.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between font-bold pt-2 border-t border-red-200">
                   <span>Total</span>
-                  <span className="text-red-600">{formatPrice(total)}</span>
+                  <span className="text-red-600">₦{TOTAL_PRICE.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -521,12 +474,12 @@ export default function ShortRestModal({ room, onClose }: ShortRestModalProps) {
                   type="number"
                   value={amountPaid}
                   onChange={(e) => setAmountPaid(e.target.value)}
-                  min={total}
+                  min={TOTAL_PRICE}
                   step="100"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                   placeholder="Enter amount"
                 />
-                {amountPaid && parseFloat(amountPaid) >= total && (
+                {amountPaid && parseFloat(amountPaid) >= TOTAL_PRICE && (
                   <div className="mt-2 p-2 bg-green-50 rounded-lg border border-green-200">
                     <p className="text-sm text-gray-600">Change:</p>
                     <p className="text-lg font-bold text-green-600">{calculateChange()}</p>
@@ -576,23 +529,19 @@ export default function ShortRestModal({ room, onClose }: ShortRestModalProps) {
               <div className="border-t border-red-200 pt-2">
                 <p className="text-xs text-gray-500">Room</p>
                 <p className="font-medium">Room {room.room_number} - {room.room_type}</p>
-                <p className="text-sm text-gray-600">
-                  Duration: {duration === '2hours' ? '2 Hours' : 
-                            duration === '4hours' ? '4 Hours' : 
-                            duration === '6hours' ? '6 Hours' : 'Full Day'}
-                </p>
+                <p className="text-sm text-gray-600">Duration: 2 Hours</p>
               </div>
 
               <div className="border-t border-red-200 pt-2">
                 <p className="text-xs text-gray-500">Total Amount</p>
-                <p className="text-xl font-bold text-red-600">{formatPrice(total)}</p>
+                <p className="text-xl font-bold text-red-600">₦{TOTAL_PRICE.toLocaleString()}</p>
                 <p className="text-sm text-gray-600">Payment: {paymentMethod === 'cash' ? 'Cash' : 'Card'}</p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Footer Buttons - Red theme */}
+        {/* Footer Buttons */}
         <div className="sticky bottom-0 bg-white border-t p-4 flex gap-3">
           {step > 1 ? (
             <button

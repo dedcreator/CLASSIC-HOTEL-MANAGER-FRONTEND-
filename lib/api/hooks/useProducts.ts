@@ -119,39 +119,39 @@ export const useUpdateProduct = () => {
   });
 };
 
-// frontend/lib/api/hooks/useProducts.ts
+
+// frontend/lib/api/hooks/useProducts.ts - Update useDeleteProduct
 
 export const useDeleteProduct = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
       try {
-        await api.delete(`/products/${id}/`);
+        const response = await api.delete(`/products/${id}/`);
+        return response.data;
       } catch (error: any) {
-        // Pass through the error with response data
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      // Invalidate all product-related queries to refresh the list
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success('Product deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['product', variables] });
+      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+      toast.success(data?.message || 'Product deleted successfully');
     },
     onError: (error: any) => {
       console.error('Delete error:', error.response?.data);
       
-      // Extract meaningful error message
       let errorMessage = 'Failed to delete product';
-      if (error.response?.data) {
-        if (typeof error.response.data === 'object') {
-          errorMessage = Object.values(error.response.data).join(', ');
-        } else {
-          errorMessage = error.response.data;
-        }
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (typeof error.response?.data === 'object') {
+        errorMessage = Object.values(error.response.data).join(', ');
       }
       
       // Don't show toast here - let the component handle it
-      // This allows for custom UI in the modal
-      throw error;
+      throw new Error(errorMessage);
     },
   });
 };
