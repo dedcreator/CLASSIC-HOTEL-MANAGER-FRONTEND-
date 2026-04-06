@@ -9,8 +9,8 @@ import { SessionChecker } from '@/components/auth/SessionChecker';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Hotel Management System',
-  description: 'Complete hotel management with bar inventory',
+  title: 'TSG Hotel Management System',
+  description: 'Complete hotel management  for TSG HOTEL COM NG with bar inventory',
 };
 
 export default function RootLayout({

@@ -121,37 +121,6 @@ export default function LoginPage() {
               </button>
             </div>
           </form>
-
-          {/* Demo credentials */}
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Demo Credentials</span>
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-2 gap-3 text-xs text-gray-600">
-              <div className="p-2 bg-gray-50 rounded">
-                <p className="font-semibold">CEO</p>
-                <p>ceo / password123</p>
-              </div>
-              <div className="p-2 bg-gray-50 rounded">
-                <p className="font-semibold">Manager</p>
-                <p>manager / password123</p>
-              </div>
-              <div className="p-2 bg-gray-50 rounded">
-                <p className="font-semibold">Receptionist</p>
-                <p>reception / password123</p>
-              </div>
-              <div className="p-2 bg-gray-50 rounded">
-                <p className="font-semibold">Bar Staff</p>
-                <p>barstaff / password123</p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
