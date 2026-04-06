@@ -33,8 +33,8 @@ export default function InventoryPage() {
 
   const { data: alerts } = useAlerts({ resolved: false });
 
-  // Check if user is manager or CEO
-  const canManage = user?.role === 'manager' || user?.role === 'ceo';
+  // Check if user is manager or CEO - use UPPERCASE to match backend
+  const canManage = user?.role === 'MANAGER' || user?.role === 'CEO';
 
   const categories = [
     { value: '', label: 'All Categories' },
@@ -58,12 +58,12 @@ export default function InventoryPage() {
     <Layout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold text-dark-500">Bar Inventory</h1>
             <p className="text-sm text-gray-600">Manage your stock, track low alerts, and scan barcodes</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <button
               onClick={() => setShowScanner(!showScanner)}
               className="btn-secondary flex items-center gap-2"
@@ -84,6 +84,7 @@ export default function InventoryPage() {
             )}
           </div>
         </div>
+
         {/* Barcode Scanner Modal */}
         {showScanner && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -91,6 +92,7 @@ export default function InventoryPage() {
             <BarcodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />
           </div>
         )}
+
         {/* Scanned Product Highlight */}
         {scannedProduct && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex justify-between items-center">
@@ -106,6 +108,7 @@ export default function InventoryPage() {
             </button>
           </div>
         )}
+
         {/* Low Stock Alerts */}
         {alerts && alerts.length > 0 && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -128,6 +131,7 @@ export default function InventoryPage() {
             </div>
           </div>
         )}
+
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -159,6 +163,7 @@ export default function InventoryPage() {
             </button>
           </div>
         </div>
+
         {/* Products Grid */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

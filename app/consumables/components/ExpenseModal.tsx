@@ -60,7 +60,6 @@ export default function ExpenseModal({ expense, onClose, onSuccess }: ExpenseMod
       setFormData({ ...formData, category: category.id });
       setShowNewCategory(false);
       setNewCategory({ name: '', description: '' });
-      toast.success('Category created');
     } catch (error) {
       toast.error('Failed to create category');
     }

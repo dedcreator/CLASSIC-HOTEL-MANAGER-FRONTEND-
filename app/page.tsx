@@ -402,41 +402,7 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Quick Actions - Mobile */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 lg:hidden">
-          <div className="grid grid-cols-4 gap-2">
-            <Link
-              href="/sales"
-              className="flex flex-col items-center p-2 text-red-600"
-            >
-              <ShoppingCartIcon className="h-6 w-6" />
-              <span className="text-xs mt-1">POS</span>
-            </Link>
-            <Link
-              href="/inventory"
-              className="flex flex-col items-center p-2 text-gray-600"
-            >
-              <CurrencyDollarIcon className="h-6 w-6" />
-              <span className="text-xs mt-1">Inventory</span>
-            </Link>
-            <Link
-              href="/rooms"
-              className="flex flex-col items-center p-2 text-gray-600"
-            >
-              <HomeIcon className="h-6 w-6" />
-              <span className="text-xs mt-1">Rooms</span>
-            </Link>
-            <Link
-              href="/bookings"
-              className="flex flex-col items-center p-2 text-gray-600"
-            >
-              <UserGroupIcon className="h-6 w-6" />
-              <span className="text-xs mt-1">Bookings</span>
-            </Link>
-          </div>
-        </div>
+        </div>  
       </Layout>
     </ProtectedRoute>
   );

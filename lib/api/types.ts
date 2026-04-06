@@ -3,7 +3,7 @@
 export interface Room {
   id: string;
   room_number: string;
-  room_type: 'standard' | 'deluxe';
+  room_type: 'standard' | 'deluxe' | 'suite' | 'executive';
   base_price: number;
   barcode: string;
   status: 'available' | 'occupied' | 'maintenance' | 'cleaning';
@@ -25,6 +25,8 @@ export interface Product {
   is_active: boolean;
   total_stock: number;
   is_low_stock: boolean;
+  location?: string;
+  is_premium?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -67,9 +69,7 @@ export interface StockAlert {
   resolved_at: string | null;
 }
 
-
-// frontend/lib/api/types.ts - Add these
-
+// Sales Types
 export interface SaleItem {
   id: string;
   product: Product;
@@ -101,30 +101,15 @@ export interface Sale {
   created_at: string;
 }
 
+// Cart Types - Only define once
 export interface CartItem {
-  product: Product;
+  id: string;
+  product_id: string;
+  name: string;
+  price: number;
   quantity: number;
-  unit_price: number;
-  discount: number;
   subtotal: number;
-}
-
-export interface ApiResponse<T> {
-  data: T;
-  message?: string;
-}
-
-export interface PaginatedResponse<T> {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: T[];
-}
-export interface CartItem {
-  product: Product;
-  quantity: number;
-  unit_price: number;
-  subtotal: number;
+  stock: number;
 }
 
 export interface CreateSaleData {
@@ -139,21 +124,7 @@ export interface CreateSaleData {
   }[];
 }
 
-export interface Room {
-  id: string;
-  room_number: string;
-  room_type: 'standard' | 'deluxe';
-  base_price: number;
-  barcode: string;
-  status: 'available' | 'occupied' | 'maintenance' | 'cleaning';
-  capacity: number;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-// frontend/lib/api/types.ts - Add these
-
+// Staff Types
 export interface Staff {
   id: string;
   username: string;
@@ -161,7 +132,7 @@ export interface Staff {
   first_name: string;
   last_name: string;
   full_name: string;
-  role: 'admin' | 'manager' | 'receptionist' | 'bar_staff' | 'housekeeping' | 'ceo';
+  role: 'ADMIN' | 'MANAGER' | 'RECEPTIONIST' | 'BAR_STAFF' | 'HOUSEKEEPING' | 'CEO';
   phone?: string;
   is_active: boolean;
   profile_picture?: string;
@@ -213,8 +184,7 @@ export interface ActivityLog {
   created_at: string;
 }
 
-
-
+// Customer Types
 export interface Customer {
   id: string;
   first_name: string;
@@ -243,7 +213,7 @@ export interface SavedCart {
   created_at: string;
 }
 
-
+// Guest & Booking Types
 export interface Guest {
   id: string;
   first_name: string;
@@ -296,8 +266,7 @@ export interface BookingStats {
   today_departures: number;
 }
 
-// frontend/lib/api/types.ts - Add these types
-
+// Expense Types
 export interface ExpenseCategory {
   id: string;
   name: string;
@@ -333,15 +302,50 @@ export interface Expense {
 export interface ExpenseSummary {
   total_expenses: number;
   expense_count: number;
+  this_month_total?: number;
   by_category: Array<{
-    category__name: string;
-    category__id: string;
+    category: string;
+    category_name: string;
     total: number;
     count: number;
   }>;
   by_month: Array<{
     month: string;
+    month_name?: string;
     total: number;
     count: number;
   }>;
+}
+
+// API Response Types
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+}
+
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
+// Sales Report Types
+export interface TodaySales {
+  summary: {
+    total_sales: number;
+    count: number;
+  };
+  transactions: Sale[];
+}
+
+export interface RevenueReport {
+  name?: string;
+  month?: string;
+  week?: string;
+  date?: string;
+  revenue: number;
+  profit: number;
+  expenses: number;
+  transactions: number;
 }

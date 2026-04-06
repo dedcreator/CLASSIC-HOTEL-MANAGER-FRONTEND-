@@ -21,7 +21,6 @@ import toast from 'react-hot-toast';
 export default function NewStaffPage() {
   const router = useRouter();
   const createStaff = useCreateStaff();
-
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -30,21 +29,22 @@ export default function NewStaffPage() {
     last_name: '',
     email: '',
     phone: '',
-    role: 'receptionist',
+    role: 'RECEPTIONIST',  
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const roles = [
-    { value: 'admin', label: 'Admin', icon: ShieldCheckIcon, color: 'purple' },
-    { value: 'manager', label: 'Manager', icon: UserIcon, color: 'blue' },
-    { value: 'receptionist', label: 'Receptionist', icon: UserIcon, color: 'green' },
-    { value: 'bar_staff', label: 'Bar Staff', icon: UserIcon, color: 'yellow' },
-    { value: 'housekeeping', label: 'Housekeeping', icon: UserIcon, color: 'pink' },
-    { value: 'ceo', label: 'CEO', icon: ShieldCheckIcon, color: 'red' },
-  ];
+const roles = [
+  { value: 'CEO', label: 'CEO', icon: ShieldCheckIcon, color: 'red', bgColor: 'bg-red-50', textColor: 'text-red-600' },
+  { value: 'MANAGER', label: 'Manager', icon: UserIcon, color: 'blue', bgColor: 'bg-blue-50', textColor: 'text-blue-600' },
+  { value: 'RECEPTIONIST', label: 'Receptionist', icon: UserIcon, color: 'green', bgColor: 'bg-green-50', textColor: 'text-green-600' },
+  { value: 'BAR_STAFF', label: 'Bar Staff', icon: UserIcon, color: 'yellow', bgColor: 'bg-yellow-50', textColor: 'text-yellow-600' },
+  { value: 'HOUSEKEEPING', label: 'Housekeeping', icon: UserIcon, color: 'pink', bgColor: 'bg-pink-50', textColor: 'text-pink-600' },
+  { value: 'ADMIN', label: 'Admin', icon: ShieldCheckIcon, color: 'purple', bgColor: 'bg-purple-50', textColor: 'text-purple-600' },
+];
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,17 +63,26 @@ export default function NewStaffPage() {
       return;
     }
 
+    // Validate required fields
+    if (!formData.username) {
+      toast.error('Username is required');
+      return;
+    }
+
+    if (!formData.email) {
+      toast.error('Email is required');
+      return;
+    }
+
     try {
+      console.log('Submitting form data:', formData);
       await createStaff.mutateAsync(formData);
-      toast.success('Staff member added successfully');
+      // REMOVE THIS LINE - the hook already shows success toast
+      // toast.success('Staff member added successfully');
       router.push('/staff');
     } catch (error: any) {
-      if (error.response?.data) {
-        setErrors(error.response.data);
-        // Show first error as toast
-        const firstError = Object.values(error.response.data)[0];
-        if (firstError) toast.error(String(firstError));
-      }
+      console.error('Form submission error:', error);
+      // Error is already handled in the mutation
     }
   };
 
@@ -329,7 +338,7 @@ export default function NewStaffPage() {
           </form>
         </div>
 
-        {/* Role Info Card */}
+        {/* Role Info Card - Fixed Dynamic Classes */}
         <div className="mt-6 bg-gray-50 rounded-lg border border-gray-200 p-4">
           <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
             <ShieldCheckIcon className="h-4 w-4" />
@@ -339,8 +348,8 @@ export default function NewStaffPage() {
             {roles.map((role) => {
               const Icon = role.icon;
               return (
-                <div key={role.value} className={`flex items-center gap-2 p-2 rounded bg-${role.color}-50`}>
-                  <Icon className={`h-4 w-4 text-${role.color}-600`} />
+                <div key={role.value} className={`flex items-center gap-2 p-2 rounded ${role.bgColor}`}>
+                  <Icon className={`h-4 w-4 ${role.textColor}`} />
                   <span className="text-gray-700">{role.label}</span>
                 </div>
               );

@@ -28,7 +28,7 @@ export default function EditStaffPage() {
     last_name: '',
     email: '',
     phone: '',
-    role: 'receptionist',
+    role: 'RECEPTIONIST',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -40,35 +40,43 @@ export default function EditStaffPage() {
         last_name: staff.last_name || '',
         email: staff.email || '',
         phone: staff.phone || '',
-        role: staff.role || 'receptionist',
+        role: staff.role || 'RECEPTIONIST',
       });
     }
   }, [staff]);
 
+  // Role options with UPPERCASE values to match backend
   const roles = [
-    { value: 'admin', label: 'Admin' },
-    { value: 'manager', label: 'Manager' },
-    { value: 'receptionist', label: 'Receptionist' },
-    { value: 'bar_staff', label: 'Bar Staff' },
-    { value: 'housekeeping', label: 'Housekeeping' },
-    { value: 'ceo', label: 'CEO' },
+    { value: 'CEO', label: 'CEO' },
+    { value: 'MANAGER', label: 'Manager' },
+    { value: 'RECEPTIONIST', label: 'Receptionist' },
+    { value: 'BAR_STAFF', label: 'Bar Staff' },
+    { value: 'HOUSEKEEPING', label: 'Housekeeping' },
+    { value: 'ADMIN', label: 'Admin' },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Ensure role is uppercase before sending
+    const submitData = {
+      ...formData,
+      role: formData.role.toUpperCase(),
+    };
+
     try {
       await updateStaff.mutateAsync({
         id: staffId,
-        ...formData,
+        ...submitData,
       });
-      toast.success('Staff updated successfully');
       router.push(`/staff/${staffId}`);
     } catch (error: any) {
+      console.error('Update error:', error);
       if (error.response?.data) {
         setErrors(error.response.data);
         const firstError = Object.values(error.response.data)[0];
         if (firstError) toast.error(String(firstError));
+      } else {
       }
     }
   };

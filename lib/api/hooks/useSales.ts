@@ -1,10 +1,10 @@
 // frontend/lib/api/hooks/useSales.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../client';
-import { Sale, Customer, SavedCart } from '../types';  // Add Customer and SavedCart here
+import { Sale, TodaySales, RevenueReport } from '../types';
 import toast from 'react-hot-toast';
 
-export const saleApi = {
+export const salesApi = {
   getAll: async (params?: any) => {
     const { data } = await api.get<Sale[]>('/sales/', { params });
     return data;
@@ -20,18 +20,13 @@ export const saleApi = {
     return data;
   },
 
-  getToday: async () => {
-    const { data } = await api.get('/sales/today/');
+  getTodaySales: async () => {
+    const { data } = await api.get<TodaySales>('/sales/today/');
     return data;
   },
 
-  getRevenueReport: async (period: string) => {
-    const { data } = await api.get(`/sales/revenue_report/?period=${period}`);
-    return data;
-  },
-
-  getTopProducts: async (days: number = 30) => {
-    const { data } = await api.get(`/sales/top_products/?days=${days}`);
+  getRevenueReport: async (period: 'weekly' | 'monthly' | 'yearly' = 'weekly') => {
+    const { data } = await api.get<RevenueReport[]>(`/sales/revenue_report/?period=${period}`);
     return data;
   },
 };
@@ -39,14 +34,14 @@ export const saleApi = {
 export const useSales = (params?: any) => {
   return useQuery({
     queryKey: ['sales', params],
-    queryFn: () => saleApi.getAll(params),
+    queryFn: () => salesApi.getAll(params),
   });
 };
 
 export const useSale = (id: string) => {
   return useQuery({
     queryKey: ['sale', id],
-    queryFn: () => saleApi.getById(id),
+    queryFn: () => salesApi.getById(id),
     enabled: !!id,
   });
 };
@@ -54,148 +49,66 @@ export const useSale = (id: string) => {
 export const useCreateSale = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: saleApi.create,
-    onSuccess: () => {
+    mutationFn: async (saleData: any) => {
+      console.log('Creating sale with data:', saleData);
+      const response = await salesApi.create(saleData);
+      return response;
+    },
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['sales'] });
+      queryClient.invalidateQueries({ queryKey: ['today-sales'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success('Sale completed successfully!');
+      queryClient.invalidateQueries({ queryKey: ['revenue-report'] });
+      toast.success('Sale completed successfully');
     },
     onError: (error: any) => {
-      console.error('Sale error:', error.response?.data);
-      toast.error(error.response?.data?.message || 'Failed to complete sale');
+      console.error('Sale creation error:', error);
+      
+      // Extract meaningful error message
+      let errorMessage = 'Failed to complete sale';
+      
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        
+        if (typeof errorData === 'string') {
+          errorMessage = errorData;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        } else if (errorData.detail) {
+          errorMessage = errorData.detail;
+        } else if (errorData.non_field_errors) {
+          errorMessage = errorData.non_field_errors[0];
+        } else if (errorData.items) {
+          errorMessage = `Items error: ${JSON.stringify(errorData.items)}`;
+        } else if (typeof errorData === 'object') {
+          const firstKey = Object.keys(errorData)[0];
+          if (firstKey) {
+            const firstValue = errorData[firstKey];
+            errorMessage = `${firstKey}: ${Array.isArray(firstValue) ? firstValue[0] : firstValue}`;
+          }
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
+      throw error;
     },
   });
 };
 
 export const useTodaySales = () => {
   return useQuery({
-    queryKey: ['sales', 'today'],
-    queryFn: saleApi.getToday,
+    queryKey: ['today-sales'],
+    queryFn: salesApi.getTodaySales,
   });
 };
 
-export const useRevenueReport = (period: string) => {
+export const useRevenueReport = (period: 'weekly' | 'monthly' | 'yearly' = 'weekly') => {
   return useQuery({
-    queryKey: ['sales', 'revenue', period],
-    queryFn: () => saleApi.getRevenueReport(period),
-  });
-};
-
-export const useTopProducts = (days: number = 30) => {
-  return useQuery({
-    queryKey: ['sales', 'top-products', days],
-    queryFn: () => saleApi.getTopProducts(days),
-  });
-};
-
-// ========== CUSTOMER API ==========
-export const customerApi = {
-  getAll: async (params?: any) => {
-    const { data } = await api.get<Customer[]>('/sales/customers/', { params });
-    return data;
-  },
-  getById: async (id: string) => {
-    const { data } = await api.get<Customer>(`/sales/customers/${id}/`);
-    return data;
-  },
-  create: async (customerData: Partial<Customer>) => {
-    const { data } = await api.post<Customer>('/sales/customers/', customerData);
-    return data;
-  },
-  search: async (query: string) => {
-    const { data } = await api.get<Customer[]>(`/sales/customers/?search=${query}`);
-    return data;
-  },
-  addVisit: async (id: string) => {
-    const { data } = await api.post(`/sales/customers/${id}/add_visit/`);
-    return data;
-  }
-};
-
-// ========== SAVED CART API ==========
-export const savedCartApi = {
-  getAll: async (customerId?: string) => {
-    const params = customerId ? { customer: customerId } : {};
-    const { data } = await api.get<SavedCart[]>('/sales/saved-carts/', { params });
-    return data;
-  },
-  create: async (cartData: any) => {
-    const { data } = await api.post<SavedCart>('/sales/saved-carts/', cartData);
-    return data;
-  },
-  complete: async (id: string) => {
-    const { data } = await api.post(`/sales/saved-carts/${id}/complete/`);
-    return data;
-  }
-};
-
-// ========== CUSTOMER HOOKS ==========
-export const useCustomers = (params?: any) => {
-  return useQuery({
-    queryKey: ['customers', params],
-    queryFn: () => customerApi.getAll(params),
-  });
-};
-
-export const useCustomer = (id: string) => {
-  return useQuery({
-    queryKey: ['customer', id],
-    queryFn: () => customerApi.getById(id),
-    enabled: !!id,
-  });
-};
-
-export const useCreateCustomer = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: customerApi.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
-      toast.success('Customer saved successfully');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to save customer');
-    },
-  });
-};
-
-export const useSearchCustomers = (query: string) => {
-  return useQuery({
-    queryKey: ['customers', 'search', query],
-    queryFn: () => customerApi.search(query),
-    enabled: query.length > 2,
-  });
-};
-
-// ========== SAVED CART HOOKS ==========
-export const useSavedCarts = (customerId?: string) => {
-  return useQuery({
-    queryKey: ['saved-carts', customerId],
-    queryFn: () => savedCartApi.getAll(customerId),
-  });
-};
-
-export const useCreateSavedCart = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: savedCartApi.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['saved-carts'] });
-      toast.success('Cart saved for later');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to save cart');
-    },
-  });
-};
-
-export const useCompleteSavedCart = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: savedCartApi.complete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['saved-carts'] });
-      toast.success('Cart completed');
-    },
+    queryKey: ['revenue-report', period],
+    queryFn: () => salesApi.getRevenueReport(period),
   });
 };

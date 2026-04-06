@@ -19,14 +19,9 @@ import {
   ClockIcon,
   CurrencyDollarIcon,
   DocumentTextIcon,
-  ReceiptRefundIcon,
-  BuildingOfficeIcon,
-  SparklesIcon,
   ShoppingCartIcon,
   BeakerIcon,
   HomeModernIcon,
-  CreditCardIcon,
-  BanknotesIcon,
   ArrowDownTrayIcon,
 } from '@heroicons/react/24/outline';
 import { useStaffMember, useDeleteStaff, useUpdateStaff, useStaffPerformance, useStaffSales, useStaffBookings, useStaffActivities } from '@/lib/api/hooks/useStaff';
@@ -34,22 +29,23 @@ import Layout from '@/components/layout/Layout';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 
+// Role colors with uppercase keys to match backend
 const roleColors: Record<string, { bg: string; text: string; border: string }> = {
-  admin: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
-  manager: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
-  receptionist: { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
-  bar_staff: { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200' },
-  housekeeping: { bg: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200' },
-  ceo: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' },
+  ADMIN: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
+  MANAGER: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+  RECEPTIONIST: { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
+  BAR_STAFF: { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200' },
+  HOUSEKEEPING: { bg: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200' },
+  CEO: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' },
 };
 
 const roleLabels: Record<string, string> = {
-  admin: 'Admin',
-  manager: 'Manager',
-  receptionist: 'Receptionist',
-  bar_staff: 'Bar Staff',
-  housekeeping: 'Housekeeping',
-  ceo: 'CEO',
+  ADMIN: 'Admin',
+  MANAGER: 'Manager',
+  RECEPTIONIST: 'Receptionist',
+  BAR_STAFF: 'Bar Staff',
+  HOUSEKEEPING: 'Housekeeping',
+  CEO: 'CEO',
 };
 
 type LogType = 'all' | 'sales' | 'bookings' | 'room_activities';
@@ -70,17 +66,17 @@ export default function StaffDetailPage() {
 
   const { data: staff, isLoading } = useStaffMember(staffId);
   const { data: performance } = useStaffPerformance(staffId, period);
-  const { data: sales, isLoading: salesLoading } = useStaffSales(staffId, {
+  const { data: sales } = useStaffSales(staffId, {
     days: period,
     startDate: dateRange === 'custom' ? customStartDate : undefined,
     endDate: dateRange === 'custom' ? customEndDate : undefined,
   });
-  const { data: bookings, isLoading: bookingsLoading } = useStaffBookings(staffId, {
+  const { data: bookings } = useStaffBookings(staffId, {
     days: period,
     startDate: dateRange === 'custom' ? customStartDate : undefined,
     endDate: dateRange === 'custom' ? customEndDate : undefined,
   });
-  const { data: activities, isLoading: activitiesLoading } = useStaffActivities(staffId, {
+  const { data: activities } = useStaffActivities(staffId, {
     days: period,
     startDate: dateRange === 'custom' ? customStartDate : undefined,
     endDate: dateRange === 'custom' ? customEndDate : undefined,
@@ -133,6 +129,29 @@ export default function StaffDetailPage() {
     };
   }, [sales, bookings]);
 
+  // Handle delete staff member - toast is already shown in useDeleteStaff hook
+  const handleDelete = async () => {
+    if (!staff) return;
+    
+    try {
+      await deleteStaff.mutateAsync(staffId);
+      router.push('/staff');
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      
+      if (error.response?.status === 403) {
+        toast.error('You do not have permission to delete this staff member');
+      } else if (error.response?.data?.error) {
+        toast.error(error.response.data.error);
+      } else if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Failed to delete staff member. Please try again.');
+      }
+    }
+  };
+
+  // Handle toggle active/inactive status
   const handleToggleStatus = async () => {
     if (!staff) return;
 
@@ -149,23 +168,22 @@ export default function StaffDetailPage() {
     }
   };
 
+  // Handle export logs to CSV
   const handleExport = () => {
-    // Create CSV data
     let csvContent = "Date,Type,Reference,Amount,Payment Method,Details\n";
     
-    if (sales) {
+    if (sales && sales.length > 0) {
       sales.forEach(sale => {
         csvContent += `${format(new Date(sale.created_at), 'yyyy-MM-dd HH:mm')},Sale,${sale.transaction_number},${sale.total_amount},${sale.payment_method},${sale.items?.length || 0} items\n`;
       });
     }
     
-    if (bookings) {
+    if (bookings && bookings.length > 0) {
       bookings.forEach(booking => {
         csvContent += `${format(new Date(booking.created_at), 'yyyy-MM-dd HH:mm')},Booking,${booking.booking_reference},${booking.total_amount},${booking.payment_method || 'N/A'},Room ${booking.room?.room_number}\n`;
       });
     }
     
-    // Download CSV
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -213,7 +231,7 @@ export default function StaffDetailPage() {
     );
   }
 
-  const roleStyle = roleColors[staff.role] || roleColors.receptionist;
+  const roleStyle = roleColors[staff.role] || roleColors.RECEPTIONIST;
 
   return (
     <Layout>
@@ -231,11 +249,11 @@ export default function StaffDetailPage() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-6">
           {/* Cover Photo with Role-based Gradient */}
           <div className={`h-32 bg-gradient-to-r ${
-            staff.role === 'bar_staff' ? 'from-amber-600 to-amber-500' :
-            staff.role === 'receptionist' ? 'from-green-600 to-green-500' :
-            staff.role === 'housekeeping' ? 'from-pink-600 to-pink-500' :
-            staff.role === 'manager' ? 'from-blue-600 to-blue-500' :
-            staff.role === 'ceo' ? 'from-red-600 to-red-500' :
+            staff.role === 'BAR_STAFF' ? 'from-amber-600 to-amber-500' :
+            staff.role === 'RECEPTIONIST' ? 'from-green-600 to-green-500' :
+            staff.role === 'HOUSEKEEPING' ? 'from-pink-600 to-pink-500' :
+            staff.role === 'MANAGER' ? 'from-blue-600 to-blue-500' :
+            staff.role === 'CEO' ? 'from-red-600 to-red-500' :
             'from-purple-600 to-purple-500'
           }`}></div>
           
@@ -277,7 +295,7 @@ export default function StaffDetailPage() {
               <div className={`px-4 py-2 rounded-lg border ${roleStyle.border} ${roleStyle.bg}`}>
                 <span className="text-sm font-medium flex items-center gap-2">
                   <ShieldCheckIcon className="h-4 w-4" />
-                  {roleLabels[staff.role]}
+                  {roleLabels[staff.role] || staff.role}
                 </span>
               </div>
               
@@ -693,7 +711,7 @@ export default function StaffDetailPage() {
               </div>
             )}
 
-            {/* Room Activities (for housekeeping) */}
+            {/* Room Activities */}
             {(logType === 'all' || logType === 'room_activities') && activities && activities.length > 0 && (
               <div className="mb-8">
                 <h3 className="text-md font-semibold text-gray-900 mb-4 flex items-center gap-2">

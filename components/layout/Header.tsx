@@ -67,19 +67,6 @@ export default function Header({ setSidebarOpen }: HeaderProps) {
             <Menu.Items className="absolute right-0 z-10 mt-2.5 w-48 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-gray-900/5 focus:outline-none">
               <Menu.Item>
                 {({ active }) => (
-                  <Link
-                    href="/settings"
-                    className={`flex items-center gap-x-2 px-3 py-1 text-sm leading-6 ${
-                      active ? 'bg-red-50 text-red-600' : 'text-gray-900'
-                    }`}
-                  >
-                    <Cog6ToothIcon className="h-4 w-4" />
-                    Settings
-                  </Link>
-                )}
-              </Menu.Item>
-              <Menu.Item>
-                {({ active }) => (
                   <button
                     onClick={logout}
                     className={`flex w-full items-center gap-x-2 px-3 py-1 text-sm leading-6 ${

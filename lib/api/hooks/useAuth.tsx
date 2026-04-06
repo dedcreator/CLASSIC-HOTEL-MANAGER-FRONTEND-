@@ -12,7 +12,7 @@ interface User {
   email: string;
   first_name: string;
   last_name: string;
-  role: 'admin' | 'manager' | 'receptionist' | 'bar_staff' | 'housekeeping' | 'ceo';
+  role: string;
   phone?: string;
 }
 
@@ -46,25 +46,83 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  // Helper functions for session management
+  const sessionHelpers = {
+    clearSession: () => {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      delete api.defaults.headers.common['Authorization'];
+    },
+    
+    setSession: (accessToken: string, refreshToken: string, userData: User) => {
+      localStorage.setItem('access_token', accessToken);
+      localStorage.setItem('refresh_token', refreshToken);
+      localStorage.setItem('user', JSON.stringify(userData));
+      api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+    },
+    
+    getTokens: () => ({
+      access: localStorage.getItem('access_token'),
+      refresh: localStorage.getItem('refresh_token'),
+    })
+  };
+
   useEffect(() => {
     checkAuth();
   }, []);
 
   const checkAuth = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
+      const { access: token, refresh: refreshToken } = sessionHelpers.getTokens();
+      const storedUser = localStorage.getItem('user');
+      
+      if (!token || !refreshToken) {
         setLoading(false);
         return;
       }
 
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      const { data } = await api.get('/auth/me/');
-      setUser(data);
+      
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch (e) {
+          console.error('Failed to parse stored user:', e);
+        }
+      }
+      
+      try {
+        const { data } = await api.get('/auth/me/');
+        setUser(data);
+        localStorage.setItem('user', JSON.stringify(data));
+      } catch (error: any) {
+        console.error('Token validation failed:', error);
+        
+        if (error.response?.status === 401 && refreshToken) {
+          try {
+            const response = await api.post('/auth/token/refresh/', {
+              refresh: refreshToken
+            });
+            
+            if (response.data.access) {
+              const newAccessToken = response.data.access;
+              localStorage.setItem('access_token', newAccessToken);
+              api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+              
+              const { data } = await api.get('/auth/me/');
+              setUser(data);
+              localStorage.setItem('user', JSON.stringify(data));
+            }
+          } catch (refreshError) {
+            console.error('Refresh failed, clearing session');
+            sessionHelpers.clearSession();
+            setUser(null);
+          }
+        }
+      }
     } catch (error) {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      delete api.defaults.headers.common['Authorization'];
+      console.error('Auth check error:', error);
     } finally {
       setLoading(false);
     }
@@ -75,8 +133,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const response = await api.post('/auth/login/', { username, password });
       const data = response.data;
       
-      console.log('✅ Login successful! Response:', data);
-
       let accessToken, refreshToken, userData;
 
       if (data.access && data.refresh) {
@@ -87,58 +143,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         accessToken = data.token;
         refreshToken = data.refresh;
         userData = data.user;
-      } else if (data.access_token && data.refresh_token) {
-        accessToken = data.access_token;
-        refreshToken = data.refresh_token;
-        userData = data.user;
       } else {
-        console.warn('Unknown response format:', data);
-        const possibleToken = data.access || data.token || data.access_token;
-        const possibleRefresh = data.refresh || data.refresh_token;
-        
-        if (possibleToken && possibleRefresh) {
-          accessToken = possibleToken;
-          refreshToken = possibleRefresh;
-          userData = data.user || data.profile || null;
-        } else {
-          throw new Error('Could not find authentication tokens in response');
-        }
+        throw new Error('Could not find authentication tokens in response');
       }
 
-      localStorage.setItem('access_token', accessToken);
-      localStorage.setItem('refresh_token', refreshToken);
-      api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+      // Ensure role is uppercase
+      if (userData && userData.role) {
+        userData.role = userData.role.toUpperCase();
+      }
 
-      if (userData) {
-        setUser(userData);
-        toast.success(`Welcome back, ${userData.first_name || 'User'}!`);
+      sessionHelpers.setSession(accessToken, refreshToken, userData);
+      setUser(userData);
+      
+      toast.success(`Welcome back, ${userData?.first_name || userData?.username || 'User'}!`);
 
-        if (userData.role === 'bar_staff') {
-          router.push('/sales');
-        } else if (userData.role === 'receptionist') {
-          router.push('/bookings');
-        } else {
-          router.push('/');
-        }
+      if (userData?.role === 'BAR_STAFF') {
+        router.push('/sales');
+      } else if (userData?.role === 'RECEPTIONIST') {
+        router.push('/bookings');
       } else {
-        try {
-          const userResponse = await api.get('/auth/me/');
-          setUser(userResponse.data);
-          toast.success('Login successful!');
-          router.push('/');
-        } catch (userError) {
-          console.error('Failed to fetch user data:', userError);
-          router.push('/');
-        }
+        router.push('/');
       }
     } catch (error: any) {
-      console.error('❌ Login error:', error);
-      
-      const errorMessage = error.response?.data?.error || 
-                          error.response?.data?.message || 
-                          error.message || 
-                          'Login failed';
-      
+      const errorMessage = error.response?.data?.error || 'Login failed';
       toast.error(errorMessage);
       throw error;
     }
@@ -148,55 +175,66 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const refresh = localStorage.getItem('refresh_token');
       if (refresh) {
-        await api.post('/auth/logout/', { refresh }).catch(() => {
-          console.log('Logout endpoint not available');
-        });
+        await api.post('/auth/logout/', { refresh }).catch(() => {});
       }
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      delete api.defaults.headers.common['Authorization'];
+      sessionHelpers.clearSession();
       setUser(null);
       router.push('/login');
       toast.success('Logged out successfully');
     }
   };
 
-  // Update profile method
   const updateProfile = async (data: UpdateProfileData) => {
     try {
-      const response = await api.put('/auth/update-profile/', data);
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const response = await api.put('/auth/update-profile/', data, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
       const updatedUser = response.data.user;
       
-      // Update user state
       setUser(updatedUser);
-      
-      // Update localStorage
       localStorage.setItem('user', JSON.stringify(updatedUser));
-      
       toast.success(response.data.message || 'Profile updated successfully');
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Failed to update profile';
+      console.error('Update profile error:', error);
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to update profile';
       toast.error(errorMessage);
       throw error;
     }
   };
 
-  // Change password method
   const changePassword = async (data: ChangePasswordData) => {
     try {
-      const response = await api.post('/auth/change-password/', data);
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const response = await api.post('/auth/change-password/', data, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
       toast.success(response.data.message || 'Password changed successfully');
       
-      // Optional: Auto logout after password change
       setTimeout(() => {
         toast.success('Please login with your new password');
         logout();
       }, 2000);
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Failed to change password';
+      console.error('Change password error:', error);
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to change password';
       toast.error(errorMessage);
       throw error;
     }

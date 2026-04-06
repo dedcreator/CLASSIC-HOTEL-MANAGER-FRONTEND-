@@ -32,10 +32,11 @@ export default function ConsumablesPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { user } = useAuth();
-  const isCEO = user?.role === 'ceo';
-  const isManager = user?.role === 'manager' || isCEO;
+  // Use uppercase to match backend
+  const isCEO = user?.role === 'CEO';
+  const isManager = user?.role === 'MANAGER' || isCEO;
 
-  const { data: expenses, isLoading, refetch } = useExpenses({
+  const { data: expenses, isLoading, error, refetch } = useExpenses({
     search: searchTerm || undefined,
     category: categoryFilter !== 'all' ? categoryFilter : undefined,
     start_date: dateFilter || undefined,
@@ -43,6 +44,11 @@ export default function ConsumablesPage() {
 
   const { data: summary } = useExpenseSummary();
   const deleteExpense = useDeleteExpense();
+
+  // Handle error
+  if (error) {
+    console.error('Expenses fetch error:', error);
+  }
 
   const handleEdit = (expense: any) => {
     setSelectedExpense(expense);
@@ -54,12 +60,14 @@ export default function ConsumablesPage() {
       await deleteExpense.mutateAsync(id);
       setShowDeleteConfirm(false);
       setSelectedExpense(null);
+      refetch();
     } catch (error) {
       toast.error('Failed to delete expense');
     }
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-NG', {
       year: 'numeric',
       month: 'short',
@@ -68,6 +76,7 @@ export default function ConsumablesPage() {
   };
 
   const formatDateTime = (dateString: string) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleString('en-NG', {
       year: 'numeric',
       month: 'short',
@@ -77,9 +86,16 @@ export default function ConsumablesPage() {
     });
   };
 
+  // Safe summary values
+  const totalExpenses = summary?.total_expenses || 0;
+  const expenseCount = summary?.expense_count || 0;
+  const categoriesCount = summary?.by_category?.length || 0;
+  const thisMonthTotal = summary?.this_month_total || summary?.by_month?.slice(-1)[0]?.total || 0;
+  const avgPerTransaction = expenseCount > 0 ? Math.round(totalExpenses / expenseCount) : 0;
+
   return (
     <Layout>
-      <div className="space-y-6 pb-20">
+      <div className="space-y-6 pb-20 px-4">
         {/* Header */}
         <div className="bg-gradient-to-r from-red-600 to-red-500 rounded-xl p-6 text-white">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -110,31 +126,31 @@ export default function ConsumablesPage() {
           <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
             <p className="text-sm text-gray-600">Total Expenses</p>
             <p className="text-2xl font-bold text-gray-900">
-              ₦{summary?.total_expenses?.toLocaleString() || '0'}
+              ₦{totalExpenses.toLocaleString()}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              {summary?.expense_count || 0} transactions
+              {expenseCount} transactions
             </p>
           </div>
           
           <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
             <p className="text-sm text-gray-600">Categories</p>
             <p className="text-2xl font-bold text-gray-900">
-              {summary?.by_category?.length || 0}
+              {categoriesCount}
             </p>
           </div>
           
           <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
             <p className="text-sm text-gray-600">This Month</p>
             <p className="text-2xl font-bold text-red-600">
-              ₦{summary?.by_month?.slice(-1)[0]?.total?.toLocaleString() || '0'}
+              ₦{thisMonthTotal.toLocaleString()}
             </p>
           </div>
           
           <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
             <p className="text-sm text-gray-600">Avg per Transaction</p>
             <p className="text-2xl font-bold text-blue-600">
-              ₦{summary?.expense_count ? (summary.total_expenses / summary.expense_count).toFixed(0) : '0'}
+              ₦{avgPerTransaction.toLocaleString()}
             </p>
           </div>
         </div>
@@ -193,6 +209,16 @@ export default function ConsumablesPage() {
               </div>
             ))}
           </div>
+        ) : error ? (
+          <div className="bg-red-50 rounded-xl border border-red-200 p-12 text-center">
+            <p className="text-red-600">Failed to load expenses. Please try again.</p>
+            <button
+              onClick={() => refetch()}
+              className="mt-4 text-red-600 hover:text-red-700 font-medium"
+            >
+              Retry
+            </button>
+          </div>
         ) : expenses?.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
             <CurrencyDollarIcon className="h-12 w-12 mx-auto text-gray-300 mb-4" />
@@ -234,7 +260,7 @@ export default function ConsumablesPage() {
                       </h3>
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-red-600">₦{expense.amount.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-red-600">₦{expense.amount?.toLocaleString() || '0'}</p>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm mb-3">
@@ -244,7 +270,7 @@ export default function ConsumablesPage() {
                   </div>
                   <div className="flex items-center gap-2 text-gray-600">
                     <CurrencyDollarIcon className="h-4 w-4" />
-                    <span className="capitalize">{expense.payment_method}</span>
+                    <span className="capitalize">{expense.payment_method || 'cash'}</span>
                   </div>
                   {expense.receipt_number && (
                     <div className="flex items-center gap-2 text-gray-600">
@@ -271,7 +297,7 @@ export default function ConsumablesPage() {
                       <PencilIcon className="h-4 w-4" />
                       Edit
                     </button>
-                    {isCEO && expense.can_delete && (
+                    {isCEO && (
                       <button
                         onClick={() => {
                           setSelectedExpense(expense);

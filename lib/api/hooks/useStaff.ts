@@ -16,7 +16,22 @@ export const staffApi = {
   },
 
   create: async (staffData: any) => {
-    const { data } = await api.post<Staff>('/auth/staff/', staffData);
+    // Ensure all required fields are present with proper values
+    const payload = {
+      username: staffData.username.trim(),
+      password: staffData.password,
+      password2: staffData.password2,
+      email: staffData.email.trim(),
+      first_name: staffData.first_name?.trim() || '',
+      last_name: staffData.last_name?.trim() || '',
+      role: staffData.role,
+      phone: staffData.phone?.trim() || '',
+      is_active: true,
+    };
+    
+    console.log('📤 Creating staff with payload:', payload);
+    const { data } = await api.post<Staff>('/auth/staff/', payload);
+    console.log('✅ Staff created:', data);
     return data;
   },
 
@@ -67,12 +82,48 @@ export const useCreateStaff = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: staffApi.create,
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['staff'] });
       toast.success('Staff member added successfully');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to add staff');
+      console.error('❌ Create staff error:', error);
+      console.error('Response data:', error.response?.data);
+      console.error('Response status:', error.response?.status);
+      
+      // Handle different error types
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+      } else if (error.response?.status === 403) {
+        toast.error('You do not have permission to add staff members');
+      } else if (error.response?.data) {
+        const errData = error.response.data;
+        
+        // Handle validation errors
+        if (errData.username) {
+          toast.error(`Username: ${Array.isArray(errData.username) ? errData.username[0] : errData.username}`);
+        } else if (errData.email) {
+          toast.error(`Email: ${Array.isArray(errData.email) ? errData.email[0] : errData.email}`);
+        } else if (errData.password) {
+          toast.error(`Password: ${Array.isArray(errData.password) ? errData.password[0] : errData.password}`);
+        } else if (errData.password2) {
+          toast.error(`Password confirmation: ${Array.isArray(errData.password2) ? errData.password2[0] : errData.password2}`);
+        } else if (errData.non_field_errors) {
+          toast.error(errData.non_field_errors[0]);
+        } else if (typeof errData === 'object') {
+          const firstKey = Object.keys(errData)[0];
+          if (firstKey) {
+            const firstValue = errData[firstKey];
+            toast.error(`${firstKey}: ${Array.isArray(firstValue) ? firstValue[0] : firstValue}`);
+          }
+        } else {
+          toast.error(String(errData));
+        }
+      } else if (error.message) {
+        toast.error(error.message);
+      } else {
+        toast.error('Failed to add staff member');
+      }
     },
   });
 };
@@ -86,37 +137,26 @@ export const useUpdateStaff = () => {
       queryClient.invalidateQueries({ queryKey: ['staff', variables.id] });
       toast.success('Staff updated successfully');
     },
+    onError: (error: any) => {
+      console.error('Update error:', error);
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to update staff';
+      toast.error(errorMessage);
+    },
   });
 };
 
-export const useStaffLogs = (staffId: string, filters?: {
-  type?: string;
-  startDate?: string;
-  endDate?: string;
-  limit?: number;
-}) => {
-  return useQuery({
-    queryKey: ['staff', staffId, 'logs', filters],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (filters?.type && filters.type !== 'all') params.append('type', filters.type);
-      if (filters?.startDate) params.append('start_date', filters.startDate);
-      if (filters?.endDate) params.append('end_date', filters.endDate);
-      if (filters?.limit) params.append('limit', filters.limit.toString());
-      
-      const response = await api.get(`/staff/${staffId}/logs?${params.toString()}`);
-      return response.data;
-    },
-    enabled: !!staffId,
-  });
-};
 export const useDeleteStaff = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: staffApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['staff'] });
-      toast.success('Staff removed');
+      toast.success('Staff member removed');
+    },
+    onError: (error: any) => {
+      console.error('Delete error:', error);
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to delete staff';
+      toast.error(errorMessage);
     },
   });
 };

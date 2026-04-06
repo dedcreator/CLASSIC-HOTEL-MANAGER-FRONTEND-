@@ -15,7 +15,7 @@ export default function NewProductPage() {
   const { user } = useAuth();
 
   // Check if user has permission to create products
-  const canCreate = user?.role === 'ceo' || user?.role === 'manager';
+  const canCreate = user?.role === 'CEO' || user?.role === 'MANAGER'; // Use UPPERCASE to match backend roles
 
   const [formData, setFormData] = useState({
     name: '',
@@ -115,7 +115,8 @@ export default function NewProductPage() {
       console.log('Sending product data:', productData);
       
       await createProduct.mutateAsync(productData);
-      toast.success('Product created successfully!');
+      // REMOVED: toast.success('Product created successfully!');
+      // The hook already shows this toast
       router.push('/inventory');
     } catch (error: any) {
       console.error('Failed to create product:', error);

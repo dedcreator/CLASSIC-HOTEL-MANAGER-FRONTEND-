@@ -38,19 +38,21 @@ export default function POSPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch products
-  const { data: products, isLoading } = useProducts({});
+  const { data: products, isLoading, refetch } = useProducts({});
   const createSale = useCreateSale();
 
-  // Get unique categories
-  const categories = ['all', ...new Set(products?.map((p: any) => p.category) || [])];
+  // Get unique categories (handle case when products is undefined)
+  const categories = products 
+    ? ['all', ...new Set(products.map((p: any) => p.category))]
+    : ['all'];
 
-  // Filter products
+  // Filter products - only show active products with stock
   const filteredProducts = products?.filter((p: any) => {
     const matchesSearch = !searchTerm || 
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.barcode && p.barcode.includes(searchTerm));
+      (p.barcode && p.barcode.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
-    return matchesSearch && matchesCategory && p.is_active && p.total_stock > 0;
+    return matchesSearch && matchesCategory && p.is_active !== false && (p.total_stock || 0) > 0;
   }) || [];
 
   // Cart calculations
@@ -60,53 +62,57 @@ export default function POSPage() {
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   // Add to cart
-  const handleAddToCart = (product: any) => {
-    if (product.total_stock <= 0) {
-      toast.error('Out of stock!');
+const handleAddToCart = (product: any) => {
+  const currentStock = product.total_stock || 0;
+  
+  if (currentStock <= 0) {
+    toast.error(`${product.name} is out of stock!`);
+    return;
+  }
+
+  const existingItem = cart.find(item => item.product_id === product.id);
+  
+  if (existingItem) {
+    if (existingItem.quantity >= currentStock) {
+      toast.error(`Only ${currentStock} ${product.unit}(s) available`);
       return;
     }
-
-    const existing = cart.find(item => item.product_id === product.id);
     
-    if (existing) {
-      if (existing.quantity >= product.total_stock) {
-        toast.error(`Only ${product.total_stock} available`);
-        return;
-      }
-      setCart(cart.map(item => 
-        item.product_id === product.id
-          ? { 
-              ...item, 
-              quantity: item.quantity + 1,
-              subtotal: Number(((item.quantity + 1) * item.price).toFixed(2))
-            }
-          : item
-      ));
-    } else {
-      const price = Number(product.default_price) || 0;
-      const subtotal = Number((price * 1).toFixed(2));
-      
-      setCart([...cart, {
-        id: Math.random().toString(36).substr(2, 9),
-        product_id: product.id,
-        name: product.name,
-        price: price,
-        quantity: 1,
-        subtotal: subtotal,
-        stock: product.total_stock
-      }]);
-    }
+    setCart(cart.map(item => 
+      item.product_id === product.id
+        ? { 
+            ...item, 
+            quantity: item.quantity + 1,
+            subtotal: Number(((item.quantity + 1) * item.price).toFixed(2))
+          }
+        : item
+    ));
+    toast.success(`Added another ${product.name} to cart`);
+  } else {
+    const price = Number(product.default_price) || 0;
+    
+    setCart([...cart, {
+      id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substr(2, 9),
+      product_id: product.id,  // Make sure this is set correctly
+      name: product.name,
+      price: price,
+      quantity: 1,
+      subtotal: price,
+      stock: currentStock
+    }]);
     toast.success(`Added ${product.name} to cart`);
-  };
+  }
+};
 
-  // Update cart quantity (FIXED VERSION - KEEP THIS ONE)
+  // Update cart quantity
   const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
       setCart(cart.filter(item => item.id !== itemId));
+      toast.success('Item removed from cart');
     } else {
       const item = cart.find(i => i.id === itemId);
       if (item && newQuantity > item.stock) {
-        toast.error(`Only ${item.stock} available`);
+        toast.error(`Only ${item.stock} ${item.name}(s) available`);
         return;
       }
       setCart(cart.map(item => 
@@ -124,54 +130,85 @@ export default function POSPage() {
   // Remove from cart
   const handleRemoveItem = (itemId: string) => {
     setCart(cart.filter(item => item.id !== itemId));
+    toast.success('Item removed from cart');
   };
 
   // Clear cart
   const handleClearCart = () => {
-    if (cart.length > 0 && confirm('Clear all items?')) {
+    if (cart.length === 0) return;
+    if (window.confirm('Are you sure you want to clear the entire cart?')) {
       setCart([]);
       setGuestName('');
+      toast.success('Cart cleared');
     }
   };
 
   // Handle payment complete
-  const handlePaymentComplete = async (paymentData: any) => {
-    setIsSubmitting(true);
 
-    try {
-      const saleData = {
-        guest_name: guestName || paymentData.guestName || 'Walk-in Guest',
-        payment_method: paymentData.paymentMethod,
-        amount_paid: paymentData.amountPaid,
-        items: cart.map(item => ({
-          product_id: item.product_id,
-          quantity: item.quantity,
-          unit_price: item.price,
-          discount: 0
-        }))
-      };
+const handlePaymentComplete = async (paymentData: any) => {
+  if (cart.length === 0) {
+    toast.error('Cart is empty');
+    return;
+  }
 
-      await createSale.mutateAsync(saleData);
-      
-      toast.success('Sale completed successfully!');
-      setCart([]);
-      setGuestName('');
-      setShowPaymentModal(false);
-      setShowCart(false);
-      
-    } catch (error: any) {
-      console.error('Sale failed:', error);
-      toast.error(error.response?.data?.message || 'Failed to complete sale');
-    } finally {
-      setIsSubmitting(false);
+  setIsSubmitting(true);
+
+  try {
+    // Format items with 2 decimal places
+    const items = cart.map(item => ({
+      product_id: item.product_id,
+      quantity: item.quantity,
+      unit_price: Number(item.price.toFixed(2)),
+      discount: 0
+    }));
+
+    const amountPaid = paymentData.paymentMethod === 'cash' 
+      ? Number(parseFloat(paymentData.amountPaid).toFixed(2))
+      : Number(cartTotal.toFixed(2));
+
+    const saleData = {
+      guest_name: guestName?.trim() || 'Walk-in Guest',
+      payment_method: paymentData.paymentMethod,
+      amount_paid: amountPaid,
+      items: items,
+    };
+
+    console.log('Sending sale data:', JSON.stringify(saleData, null, 2));
+    
+    const result = await createSale.mutateAsync(saleData);
+  
+    
+    // Reset everything
+    setCart([]);
+    setGuestName('');
+    setShowPaymentModal(false);
+    setShowCart(false);
+    setSearchTerm('');
+    setSelectedCategory('all');
+    
+    refetch();
+    
+  } catch (error: any) {
+    console.error('Sale failed:', error);
+    
+    let errorMessage = 'Failed to complete sale';
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.response?.data?.error) {
+      errorMessage = error.response.data.error;
     }
-  };
+    
+    toast.error(errorMessage);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <Layout>
-      <div className="h-full flex flex-col bg-gray-50">
+      <div className="h-screen flex flex-col bg-gray-50">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-10">
+        <div className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-10 shadow-sm">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold text-gray-900">Point of Sale</h1>
             
@@ -189,6 +226,20 @@ export default function POSPage() {
             </button>
           </div>
 
+          {/* Guest Name Input */}
+          <div className="mt-3">
+            <div className="relative">
+              <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Guest name (optional)"
+                value={guestName}
+                onChange={(e) => setGuestName(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
           {/* Search Bar */}
           <div className="mt-3 relative">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -203,7 +254,7 @@ export default function POSPage() {
           </div>
 
           {/* Category Filters */}
-          <div className="mt-3 overflow-x-auto whitespace-nowrap pb-2 hide-scrollbar">
+          <div className="mt-3 overflow-x-auto whitespace-nowrap pb-2">
             <div className="flex gap-2">
               {categories.map((cat) => (
                 <button
@@ -215,7 +266,7 @@ export default function POSPage() {
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  {cat === 'all' ? 'All' : cat.charAt(0).toUpperCase() + cat.slice(1)}
                 </button>
               ))}
             </div>
@@ -266,16 +317,6 @@ export default function POSPage() {
           isSubmitting={isSubmitting}
         />
       )}
-
-      <style jsx>{`
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
     </Layout>
   );
 }
