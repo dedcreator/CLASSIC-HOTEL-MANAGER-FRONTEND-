@@ -16,6 +16,7 @@ import {
   ChevronUpIcon,
 } from '@heroicons/react/24/outline';
 import { useProduct, useProductHistory, useAddStock, useDeleteProduct } from '@/lib/api/hooks/useProducts';
+import { useAuth } from '@/lib/api/hooks/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import Layout from '@/components/layout/Layout';
 import AddStockModal from '../components/AddStockModel';
@@ -48,6 +49,7 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const productId = params.id as string;
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const [showAddStock, setShowAddStock] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -57,6 +59,14 @@ export default function ProductDetailPage() {
   const { data: history, refetch: refetchHistory } = useProductHistory(productId);
   const addStock = useAddStock();
   const deleteProduct = useDeleteProduct();
+
+  // Check permissions - use UPPERCASE to match backend
+  const canDelete = user?.role === 'CEO';
+  const canManage = user?.role === 'MANAGER' || user?.role === 'CEO';
+
+  // Debug log to check role
+  console.log('Current user role:', user?.role);
+  console.log('Can delete:', canDelete);
 
   // Function to refresh all data after adding stock
   const refreshData = async () => {
@@ -77,7 +87,6 @@ export default function ProductDetailPage() {
         selling_price: data.selling_price || product?.default_price,
       });
       
-      // Refresh all data
       await refreshData();
       setShowAddStock(false);
       
@@ -174,13 +183,16 @@ export default function ProductDetailPage() {
                 <PencilIcon className="h-4 w-4" />
                 Edit
               </Link>
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-red-700 flex items-center justify-center gap-2 text-sm sm:text-base"
-              >
-                <TrashIcon className="h-4 w-4" />
-                Delete
-              </button>
+              {/* Only show Delete button if user is CEO */}
+              {canDelete && (
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-red-700 flex items-center justify-center gap-2 text-sm sm:text-base"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                  Delete
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -290,8 +302,8 @@ export default function ProductDetailPage() {
         />
       )}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
+      {/* Delete Confirmation Modal - Only show if user is CEO */}
+      {showDeleteConfirm && canDelete && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold text-dark-500 mb-2">Delete Product</h3>
