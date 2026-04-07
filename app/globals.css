@@ -60,3 +60,18 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #C53030;
 }
+
+.toggle-checkbox:checked {
+  right: 0;
+  border-color: #E53E3E;
+}
+.toggle-checkbox:checked + .toggle-label {
+  background-color: #E53E3E;
+}
+.toggle-checkbox {
+  right: 0;
+  transition: all 0.3s ease;
+}
+.toggle-label {
+  transition: background-color 0.3s ease;
+}

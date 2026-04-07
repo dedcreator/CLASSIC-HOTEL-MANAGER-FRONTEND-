@@ -25,6 +25,7 @@ const navigation = [
   { name: 'POS', href: '/sales', icon: ChartBarIcon, roles: ['CEO', 'MANAGER', 'ADMIN', 'BAR_STAFF'] },
   { name: 'Staff', href: '/staff', icon: UserGroupIcon, roles: ['CEO', 'MANAGER', 'ADMIN'] },
   { name: 'Expenses', href: '/consumables', icon: CurrencyDollarIcon, roles: ['CEO', 'MANAGER', 'ADMIN'] },
+  { name: 'Financial Reports', href: '/reports', icon: ChartBarIcon, roles: ['CEO', 'MANAGER', 'ADMIN'] },
 ];
 
 const NavSkeleton = () => (
