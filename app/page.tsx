@@ -4,25 +4,28 @@ import React, { useState, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import TodaySchedule from '@/components/dashboard/TodaySchedule';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import {
-  CurrencyDollarIcon,
-  HomeIcon,
-  ShoppingCartIcon,
-  UserGroupIcon,
-  ExclamationTriangleIcon,
+import { 
+  CurrencyDollarIcon, 
+  HomeIcon, 
+  ShoppingCartIcon, 
+  UserGroupIcon, 
+  ExclamationTriangleIcon, 
   SparklesIcon,
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
 } from '@heroicons/react/24/outline';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  PieChart, 
+  Pie, 
   Cell,
+  Legend,
 } from 'recharts';
 import { ValueType } from 'recharts/types/component/DefaultTooltipContent';
 import { useProducts, useAlerts } from '@/lib/api/hooks/useProducts';
@@ -31,15 +34,33 @@ import { useBookings, useTodayBookings, useBookingStats } from '@/lib/api/hooks/
 import { useRooms } from '@/lib/api/hooks/useRooms';
 import Link from 'next/link';
 
-const COLORS = {
-  primary: '#E53E3E',
-  secondary: '#C53030',
-  dark: '#1A1A1A',
+// Hotel-branded color palette
+const HOTEL_COLORS = {
+  primary: '#16302B',    // Deep forest green
+  primaryLight: '#1D3B34',
+  gold: '#C9A468',
+  goldHover: '#B8905B',
+  cream: '#FAF6EF',
+  creamLight: '#F7F1E4',
+  textDark: '#2A2622',
+  textMuted: '#8A8377',
+  border: '#DDD5C4',
   success: '#10B981',
   warning: '#F59E0B',
   danger: '#EF4444',
   purple: '#8B5CF6',
   pink: '#EC4899',
+};
+
+// Chart colors with hotel theme
+const CHART_COLORS = {
+  revenue: '#16302B',
+  profit: '#C9A468',
+  available: '#10B981',
+  occupied: '#16302B',
+  maintenance: '#F59E0B',
+  standard: '#C9A468',
+  duplex: '#16302B',
 };
 
 export default function Dashboard() {
@@ -57,17 +78,16 @@ export default function Dashboard() {
   const { data: todayBookings, refetch: refetchTodayBookings } = useTodayBookings();
   const { data: bookingStats } = useBookingStats();
 
-  // Refetch data periodically to keep revenue updated
+  // Refetch data periodically
   useEffect(() => {
     const interval = setInterval(() => {
       refetchTodaySales();
       refetchTodayBookings();
-    }, 30000); // Refresh every 30 seconds
-    
+    }, 30000);
     return () => clearInterval(interval);
   }, [refetchTodaySales, refetchTodayBookings]);
 
-  // Process revenue data for chart
+  // Process revenue data
   useEffect(() => {
     if (revenueReport && revenueReport.length > 0) {
       const formattedData = revenueReport.map((item: any) => ({
@@ -83,70 +103,68 @@ export default function Dashboard() {
     }
   }, [revenueReport]);
 
-  // Calculate real stats
+  // Calculate stats
   const totalProducts = products?.length || 0;
   const lowStockCount = alerts?.length || 0;
-  
-  // Today's revenue - UPDATING REAL-TIME
   const todayRevenue = todaySales?.summary?.total_sales || 0;
   const todayTransactions = todaySales?.summary?.count || 0;
   
-  // Calculate room stats
   const totalRooms = rooms?.length || 0;
   const availableRooms = rooms?.filter((r: any) => r.status === 'available').length || 0;
   const occupiedRooms = rooms?.filter((r: any) => r.status === 'occupied').length || 0;
   const maintenanceRooms = rooms?.filter((r: any) => r.status === 'maintenance').length || 0;
   const occupancyRate = totalRooms ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
 
-  // Calculate booking stats
   const activeGuests = bookings?.filter((b: any) => b.status === 'checked_in').length || 0;
   const todayArrivals = todayBookings?.arrivals?.length || 0;
   const todayDepartures = todayBookings?.departures?.length || 0;
-
-  // Calculate total revenue (all time)
   const totalRevenue = sales?.reduce((sum: number, s: any) => sum + s.total_amount, 0) || 0;
 
-  // Stats cards with real data
+  // Stats cards with hotel styling
   const stats = [
     {
       name: "Today's Revenue",
       value: `₦${Number(todayRevenue).toLocaleString()}`,
-      change: todayTransactions > 0 ? `${todayTransactions} transactions today` : 'No sales yet',
+      change: todayTransactions > 0 ? `${todayTransactions} transactions` : 'No sales yet',
       icon: CurrencyDollarIcon,
-      iconBg: 'bg-red-100',
-      iconColor: 'text-red-600',
+      iconBg: 'bg-[#F7F1E4]',
+      iconColor: 'text-[#16302B]',
       link: '/sales',
+      trend: todayRevenue > 0 ? 'up' : 'neutral',
     },
     {
       name: 'Active Guests',
       value: activeGuests.toString(),
       change: `${todayArrivals} arrivals, ${todayDepartures} departures`,
       icon: UserGroupIcon,
-      iconBg: 'bg-blue-100',
-      iconColor: 'text-blue-600',
+      iconBg: 'bg-[#F7F1E4]',
+      iconColor: 'text-[#16302B]',
       link: '/bookings',
+      trend: 'neutral',
     },
     {
       name: 'Room Occupancy',
       value: `${occupiedRooms}/${totalRooms}`,
       change: `${occupancyRate}% occupied`,
       icon: HomeIcon,
-      iconBg: 'bg-green-100',
-      iconColor: 'text-green-600',
+      iconBg: 'bg-[#F7F1E4]',
+      iconColor: 'text-[#16302B]',
       link: '/rooms',
+      trend: occupancyRate > 70 ? 'up' : occupancyRate > 30 ? 'neutral' : 'down',
     },
     {
       name: 'Low Stock Items',
       value: lowStockCount.toString(),
       change: lowStockCount > 0 ? 'Needs attention' : 'All good',
       icon: ExclamationTriangleIcon,
-      iconBg: lowStockCount > 0 ? 'bg-red-100' : 'bg-green-100',
-      iconColor: lowStockCount > 0 ? 'text-red-600' : 'text-green-600',
+      iconBg: lowStockCount > 0 ? 'bg-[#FEF2F2]' : 'bg-[#F7F1E4]',
+      iconColor: lowStockCount > 0 ? 'text-[#EF4444]' : 'text-[#16302B]',
       link: '/inventory?filter=low-stock',
+      trend: lowStockCount > 0 ? 'down' : 'up',
     },
   ];
 
-  // Room type distribution for pie chart
+  // Room distribution for pie chart
   const roomTypeData = rooms?.reduce((acc: any[], room: any) => {
     const existing = acc.find(item => item.name === room.room_type);
     if (existing) {
@@ -155,21 +173,30 @@ export default function Dashboard() {
       acc.push({
         name: room.room_type === 'standard' ? 'Standard' : 'Duplex',
         value: 1,
-        color: room.room_type === 'standard' ? COLORS.primary : COLORS.purple,
+        color: room.room_type === 'standard' ? CHART_COLORS.standard : CHART_COLORS.duplex,
       });
     }
     return acc;
   }, []) || [];
 
+  // Room status data
+  const roomStatusData = [
+    { name: 'Available', value: availableRooms, color: CHART_COLORS.available },
+    { name: 'Occupied', value: occupiedRooms, color: CHART_COLORS.occupied },
+    { name: 'Maintenance', value: maintenanceRooms, color: CHART_COLORS.maintenance },
+  ].filter(item => item.value > 0);
+
   return (
     <ProtectedRoute>
       <Layout>
-        {/* Header with Welcome Message */}
-        <div className="mb-8">
+        {/* Elegant Header */}
+        <div className="mb-8 border-b border-[#DDD5C4] pb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold text-dark-500">Dashboard</h1>
-              <p className="text-sm text-gray-600">
+              <h1 className="font-display text-2xl font-medium text-[#2A2622]">
+                Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening'}
+              </h1>
+              <p className="font-body text-sm text-[#8A8377] mt-1">
                 {new Date().toLocaleDateString('en-US', { 
                   weekday: 'long', 
                   year: 'numeric', 
@@ -179,24 +206,24 @@ export default function Dashboard() {
               </p>
             </div>
             
-            {/* Date Range Selector */}
-            <div className="flex bg-white rounded-lg border border-gray-200 p-1">
+            {/* Date Range Selector - Hotel Style */}
+            <div className="flex bg-[#F7F1E4] rounded-lg border border-[#DDD5C4] p-1">
               <button
                 onClick={() => setDateRange('week')}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                className={`font-body px-4 py-2 text-sm font-medium rounded-md transition-all ${
                   dateRange === 'week'
-                    ? 'bg-red-600 text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-[#16302B] text-[#F7F1E4] shadow-sm'
+                    : 'text-[#8A8377] hover:bg-white/50'
                 }`}
               >
                 Week
               </button>
               <button
                 onClick={() => setDateRange('month')}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                className={`font-body px-4 py-2 text-sm font-medium rounded-md transition-all ${
                   dateRange === 'month'
-                    ? 'bg-red-600 text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-[#16302B] text-[#F7F1E4] shadow-sm'
+                    : 'text-[#8A8377] hover:bg-white/50'
                 }`}
               >
                 Month
@@ -205,61 +232,65 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Low Stock Alert Banner */}
+        {/* Low Stock Alert - Hotel Style */}
         {lowStockCount > 0 && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="mb-6 bg-[#FEF2F2] border border-[#FECACA] rounded-lg p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />
-              <p className="text-sm text-red-800">
-                <span className="font-semibold">{lowStockCount} product{lowStockCount > 1 ? 's' : ''}</span> {lowStockCount > 1 ? 'are' : 'is'} running low on stock.
-                <Link href="/inventory?filter=low-stock" className="ml-2 text-red-600 font-semibold hover:underline">
-                  View now →
-                </Link>
+              <ExclamationTriangleIcon className="h-5 w-5 text-[#EF4444]" />
+              <p className="font-body text-sm text-[#991B1B]">
+                <span className="font-semibold">{lowStockCount} product{lowStockCount > 1 ? 's' : ''}</span> 
+                {' '}{lowStockCount > 1 ? 'are' : 'is'} running low on stock.
               </p>
             </div>
+            <Link 
+              href="/inventory?filter=low-stock" 
+              className="font-body text-sm font-medium text-[#16302B] hover:text-[#1D3B34] underline decoration-[#C9A468] underline-offset-4 transition-colors"
+            >
+              View now →
+            </Link>
           </div>
         )}
 
-        {/* Stats Grid */}
+        {/* Stats Grid - Hotel Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {stats.map((stat) => (
             <Link
               key={stat.name}
               href={stat.link}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-all hover:border-red-200"
+              className="group bg-white rounded-lg border border-[#DDD5C4] p-5 hover:border-[#C9A468] hover:shadow-md transition-all duration-200"
             >
-              <div className="flex items-start justify-between mb-2">
+              <div className="flex items-start justify-between">
                 <div className={`${stat.iconBg} p-2 rounded-lg`}>
                   <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
                 </div>
-                <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                  stat.name === 'Low Stock Items' && lowStockCount > 0
-                    ? 'bg-red-100 text-red-600'
-                    : 'bg-green-100 text-green-600'
+                <span className={`font-body text-xs px-2 py-1 rounded-full ${
+                  stat.trend === 'up' ? 'bg-[#D1FAE5] text-[#065F46]' :
+                  stat.trend === 'down' ? 'bg-[#FEF2F2] text-[#991B1B]' :
+                  'bg-[#F7F1E4] text-[#8A8377]'
                 }`}>
                   {stat.change}
                 </span>
               </div>
-              <p className="text-xs text-gray-600 mb-1">{stat.name}</p>
-              <p className="text-xl font-bold text-dark-500">{stat.value}</p>
+              <p className="font-body text-xs text-[#8A8377] mt-3">{stat.name}</p>
+              <p className="font-display text-2xl font-medium text-[#2A2622] mt-1">{stat.value}</p>
             </Link>
           ))}
         </div>
 
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Revenue Chart */}
-          <div className="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          {/* Revenue Chart - Hotel Style */}
+          <div className="lg:col-span-2 bg-white rounded-lg border border-[#DDD5C4] p-5">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-dark-500">Revenue Overview</h2>
-              <div className="flex items-center gap-3 text-xs">
-                <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 bg-red-600 rounded-full"></span>
-                  <span className="text-gray-600">Revenue</span>
+              <h2 className="font-display text-lg font-medium text-[#2A2622]">Revenue Overview</h2>
+              <div className="flex items-center gap-4 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#16302B]"></span>
+                  <span className="font-body text-[#8A8377]">Revenue</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 bg-green-600 rounded-full"></span>
-                  <span className="text-gray-600">Profit</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#C9A468]"></span>
+                  <span className="font-body text-[#8A8377]">Profit</span>
                 </div>
               </div>
             </div>
@@ -268,41 +299,61 @@ export default function Dashboard() {
                 <AreaChart data={revenueData.length > 0 ? revenueData : [{ name: 'No Data', revenue: 0, profit: 0 }]}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#E53E3E" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#E53E3E" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#16302B" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#16302B" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#C9A468" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#C9A468" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F7F1E4" />
+                  <XAxis dataKey="name" stroke="#8A8377" />
+                  <YAxis stroke="#8A8377" />
                   <Tooltip 
                     formatter={(value: ValueType) => {
                       const numValue = typeof value === 'number' ? value : 0;
                       return [`₦${numValue.toLocaleString()}`, ''];
                     }}
+                    contentStyle={{
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid #DDD5C4',
+                      borderRadius: '6px',
+                      fontFamily: "'Work Sans', sans-serif",
+                    }}
                   />
-                  <Area type="monotone" dataKey="revenue" stroke="#E53E3E" fillOpacity={1} fill="url(#colorRevenue)" />
-                  <Area type="monotone" dataKey="profit" stroke="#10B981" fillOpacity={1} fill="url(#colorProfit)" />
+                  <Area 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="#16302B" 
+                    fillOpacity={1} 
+                    fill="url(#colorRevenue)" 
+                    strokeWidth={2}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="profit" 
+                    stroke="#C9A468" 
+                    fillOpacity={1} 
+                    fill="url(#colorProfit)" 
+                    strokeWidth={2}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
             {revenueData.length === 0 && (
-              <p className="text-center text-gray-500 text-sm mt-2">No revenue data available</p>
+              <p className="font-body text-center text-[#8A8377] text-sm mt-2">No revenue data available</p>
             )}
           </div>
 
-          {/* Room Distribution */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <h2 className="text-lg font-semibold text-dark-500 mb-4">Room Distribution</h2>
+          {/* Room Distribution - Hotel Style */}
+          <div className="bg-white rounded-lg border border-[#DDD5C4] p-5">
+            <h2 className="font-display text-lg font-medium text-[#2A2622] mb-4">Room Distribution</h2>
             <div className="h-48 sm:h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={roomTypeData.length > 0 ? roomTypeData : [{ name: 'No Rooms', value: 1, color: '#E2E8F0' }]}
+                    data={roomTypeData.length > 0 ? roomTypeData : [{ name: 'No Rooms', value: 1, color: '#DDD5C4' }]}
                     cx="50%"
                     cy="50%"
                     innerRadius={45}
@@ -311,98 +362,115 @@ export default function Dashboard() {
                     dataKey="value"
                   >
                     {roomTypeData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color || COLORS.primary} />
+                      <Cell key={`cell-${index}`} fill={entry.color || '#DDD5C4'} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid #DDD5C4',
+                      borderRadius: '6px',
+                      fontFamily: "'Work Sans', sans-serif",
+                    }}
+                  />
+                  <Legend 
+                    verticalAlign="bottom" 
+                    align="center"
+                    formatter={(value) => (
+                      <span className="font-body text-sm text-[#5B564B]">{value}</span>
+                    )}
+                  />
                 </PieChart>
               </ResponsiveContainer>
-            </div>
-            <div className="mt-4 space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-red-600"></span>
-                  <span className="text-gray-600">Available</span>
-                </div>
-                <span className="font-medium">{availableRooms}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-green-600"></span>
-                  <span className="text-gray-600">Occupied</span>
-                </div>
-                <span className="font-medium">{occupiedRooms}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-yellow-600"></span>
-                  <span className="text-gray-600">Maintenance</span>
-                </div>
-                <span className="font-medium">{maintenanceRooms}</span>
-              </div>
             </div>
           </div>
         </div>
 
         {/* Second Row - Today's Schedule and Quick Stats */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Today's Schedule - Shows real arrivals/departures */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Today's Schedule */}
           <div className="lg:col-span-1">
             <TodaySchedule />
           </div>
 
-          {/* Quick Stats */}
+          {/* Quick Stats - Hotel Gradient Cards */}
           <div className="lg:col-span-2 grid grid-cols-2 gap-4">
-            <div className="bg-gradient-to-br from-red-600 to-red-500 rounded-lg p-4 text-white">
-              <div className="flex items-center justify-between mb-2">
-                <ShoppingCartIcon className="h-6 w-6 text-red-100" />
-                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">Today</span>
+            {/* Revenue Card */}
+            <div className="bg-gradient-to-br from-[#16302B] to-[#1D3B34] rounded-lg p-5 text-[#F7F1E4]">
+              <div className="flex items-center justify-between mb-3">
+                <ShoppingCartIcon className="h-6 w-6 text-[#C9A468]" />
+                <span className="font-body text-xs bg-[#C9A468]/20 text-[#C9A468] px-2.5 py-1 rounded-full">
+                  Today
+                </span>
               </div>
-              <p className="text-2xl font-bold mb-1">₦{Number(todayRevenue).toLocaleString()}</p>
-              <p className="text-xs text-red-100">Total Sales</p>
-              <div className="mt-3 flex items-center gap-2 text-xs">
-                <span className="bg-white/20 px-2 py-1 rounded">{todayTransactions} transactions</span>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-blue-600 to-blue-500 rounded-lg p-4 text-white">
-              <div className="flex items-center justify-between mb-2">
-                <UserGroupIcon className="h-6 w-6 text-blue-100" />
-                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">Active</span>
-              </div>
-              <p className="text-2xl font-bold mb-1">{activeGuests}</p>
-              <p className="text-xs text-blue-100">Checked-in Guests</p>
-              <div className="mt-3 flex items-center gap-2 text-xs">
-                <span className="bg-white/20 px-2 py-1 rounded">{todayArrivals} arrivals</span>
-                <span className="bg-white/20 px-2 py-1 rounded">{todayDepartures} departures</span>
+              <p className="font-display text-2xl font-medium mb-1">₦{Number(todayRevenue).toLocaleString()}</p>
+              <p className="font-body text-sm text-[#B9C4B9]">Total Sales</p>
+              <div className="mt-3 flex items-center gap-2">
+                <span className="font-body text-xs bg-white/10 px-2.5 py-1 rounded-full">
+                  {todayTransactions} transactions
+                </span>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-600 to-purple-500 rounded-lg p-4 text-white">
-              <div className="flex items-center justify-between mb-2">
-                <HomeIcon className="h-6 w-6 text-purple-100" />
-                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">Rooms</span>
+            {/* Guests Card */}
+            <div className="bg-gradient-to-br from-[#C9A468] to-[#B8905B] rounded-lg p-5 text-white">
+              <div className="flex items-center justify-between mb-3">
+                <UserGroupIcon className="h-6 w-6 text-[#F7F1E4]" />
+                <span className="font-body text-xs bg-white/20 px-2.5 py-1 rounded-full">
+                  Active
+                </span>
               </div>
-              <p className="text-2xl font-bold mb-1">{occupiedRooms}/{totalRooms}</p>
-              <p className="text-xs text-purple-100">Occupied</p>
-              <div className="mt-3 flex items-center gap-2 text-xs">
-                <span className="bg-white/20 px-2 py-1 rounded">{occupancyRate}% occupancy</span>
+              <p className="font-display text-2xl font-medium mb-1">{activeGuests}</p>
+              <p className="font-body text-sm text-[#F7F1E4]/80">Checked-in Guests</p>
+              <div className="mt-3 flex items-center gap-2">
+                <span className="font-body text-xs bg-white/20 px-2.5 py-1 rounded-full">
+                  {todayArrivals} arrivals
+                </span>
+                <span className="font-body text-xs bg-white/20 px-2.5 py-1 rounded-full">
+                  {todayDepartures} departures
+                </span>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-amber-600 to-amber-500 rounded-lg p-4 text-white">
-              <div className="flex items-center justify-between mb-2">
-                <SparklesIcon className="h-6 w-6 text-amber-100" />
-                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">Inventory</span>
+            {/* Rooms Card */}
+            <div className="bg-gradient-to-br from-[#2A2622] to-[#3D3630] rounded-lg p-5 text-[#F7F1E4]">
+              <div className="flex items-center justify-between mb-3">
+                <HomeIcon className="h-6 w-6 text-[#C9A468]" />
+                <span className="font-body text-xs bg-[#C9A468]/20 text-[#C9A468] px-2.5 py-1 rounded-full">
+                  Rooms
+                </span>
               </div>
-              <p className="text-2xl font-bold mb-1">{totalProducts}</p>
-              <p className="text-xs text-amber-100">Total Products</p>
-              <div className="mt-3 flex items-center gap-2 text-xs">
-                <span className="bg-white/20 px-2 py-1 rounded">{lowStockCount} low stock</span>
+              <p className="font-display text-2xl font-medium mb-1">{occupiedRooms}/{totalRooms}</p>
+              <p className="font-body text-sm text-[#B9C4B9]">Occupied</p>
+              <div className="mt-3 flex items-center gap-2">
+                <span className="font-body text-xs bg-white/10 px-2.5 py-1 rounded-full">
+                  {occupancyRate}% occupancy
+                </span>
+              </div>
+            </div>
+
+            {/* Inventory Card */}
+            <div className="bg-gradient-to-br from-[#F7F1E4] to-[#E8DDCC] rounded-lg p-5">
+              <div className="flex items-center justify-between mb-3">
+                <SparklesIcon className="h-6 w-6 text-[#16302B]" />
+                <span className="font-body text-xs bg-[#16302B]/10 text-[#16302B] px-2.5 py-1 rounded-full">
+                  Inventory
+                </span>
+              </div>
+              <p className="font-display text-2xl font-medium text-[#2A2622] mb-1">{totalProducts}</p>
+              <p className="font-body text-sm text-[#8A8377]">Total Products</p>
+              <div className="mt-3 flex items-center gap-2">
+                <span className={`font-body text-xs px-2.5 py-1 rounded-full ${
+                  lowStockCount > 0 
+                    ? 'bg-[#EF4444]/10 text-[#EF4444]' 
+                    : 'bg-[#10B981]/10 text-[#065F46]'
+                }`}>
+                  {lowStockCount > 0 ? `${lowStockCount} low stock` : 'All stocked'}
+                </span>
               </div>
             </div>
           </div>
-        </div>  
+        </div>
       </Layout>
     </ProtectedRoute>
   );

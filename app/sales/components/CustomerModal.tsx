@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MagnifyingGlassIcon, XMarkIcon, UserPlusIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, XMarkIcon, UserPlusIcon, UserIcon, EnvelopeIcon, PhoneIcon } from '@heroicons/react/24/outline';
 import { useSearchCustomers, useCreateCustomer } from '@/lib/api/hooks/useSales';
 
 interface Props {
@@ -30,93 +30,157 @@ export default function CustomerSearch({ onSelect, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden">
-        <div className="p-4 border-b flex justify-between items-center">
-          <h2 className="text-lg font-semibold">Select Customer</h2>
-          <button onClick={onClose}>
+    <div className="fixed inset-0 bg-[#2A2622]/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-xl">
+        {/* Header */}
+        <div className="p-4 border-b border-[#DDD5C4] flex justify-between items-center bg-[#F7F1E4] rounded-t-lg">
+          <div>
+            <h2 className="font-display text-lg font-medium text-[#2A2622]">Select Customer</h2>
+            <p className="font-body text-sm text-[#8A8377]">Search or create a new customer</p>
+          </div>
+          <button 
+            onClick={onClose}
+            className="p-1.5 text-[#8A8377] hover:text-[#2A2622] hover:bg-white/50 rounded-lg transition-colors"
+          >
             <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
 
-        <div className="p-4">
+        <div className="p-6">
           {/* Search */}
           <div className="relative mb-4">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute left-0 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#8A8377]" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name, email, or phone..."
-              className="w-full pl-10 pr-4 py-2 border rounded-lg"
+              className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent pl-8 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]"
+              autoFocus
             />
           </div>
 
           {/* Results */}
-          <div className="space-y-2 max-h-60 overflow-y-auto mb-4">
-            {results?.map((customer) => (
-              <button
-                key={customer.id}
-                onClick={() => onSelect(customer)}
-                className="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100"
-              >
-                <p className="font-medium">{customer.first_name} {customer.last_name}</p>
-                <p className="text-sm text-gray-600">{customer.email} • {customer.phone}</p>
-              </button>
-            ))}
-          </div>
+          {results && results.length > 0 && (
+            <div className="space-y-2 max-h-60 overflow-y-auto mb-4">
+              {results.map((customer) => (
+                <button
+                  key={customer.id}
+                  onClick={() => onSelect(customer)}
+                  className="w-full text-left p-3 bg-[#F7F1E4] rounded-lg hover:bg-[#DDD5C4] transition-colors border border-transparent hover:border-[#C9A468]"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#16302B] flex items-center justify-center flex-shrink-0">
+                      <span className="font-display text-sm font-medium text-[#F7F1E4]">
+                        {customer.first_name?.[0]}{customer.last_name?.[0]}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-body font-medium text-[#2A2622]">
+                        {customer.first_name} {customer.last_name}
+                      </p>
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-[#8A8377]">
+                        {customer.email && (
+                          <span className="font-body text-xs flex items-center gap-1">
+                            <EnvelopeIcon className="h-3 w-3" />
+                            {customer.email}
+                          </span>
+                        )}
+                        {customer.phone && (
+                          <span className="font-body text-xs flex items-center gap-1">
+                            <PhoneIcon className="h-3 w-3" />
+                            {customer.phone}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {search && results?.length === 0 && (
+            <div className="text-center py-6">
+              <p className="font-body text-[#8A8377]">No customers found</p>
+              <p className="font-body text-sm text-[#8A8377] mt-1">Try a different search or create a new customer</p>
+            </div>
+          )}
 
           {/* New Customer Form */}
           {!showNewForm ? (
             <button
               onClick={() => setShowNewForm(true)}
-              className="w-full py-2 text-red-600 hover:text-red-700 font-medium flex items-center justify-center gap-2"
+              className="w-full py-2.5 text-[#16302B] hover:text-[#1D3B34] font-medium flex items-center justify-center gap-2 border border-[#DDD5C4] rounded-lg hover:bg-[#F7F1E4] transition-colors"
             >
               <UserPlusIcon className="h-5 w-5" />
               Add New Customer
             </button>
           ) : (
-            <div className="border-t pt-4">
-              <h3 className="font-medium mb-3">New Customer</h3>
+            <div className="border-t border-[#DDD5C4] pt-4 mt-2">
+              <h3 className="font-display text-base font-medium text-[#2A2622] mb-3">New Customer</h3>
               <div className="space-y-3">
-                <input
-                  type="text"
-                  placeholder="First Name"
-                  value={newCustomer.first_name}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, first_name: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-                <input
-                  type="text"
-                  placeholder="Last Name"
-                  value={newCustomer.last_name}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, last_name: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-                <input
-                  type="email"
-                  placeholder="Email (optional)"
-                  value={newCustomer.email}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-                <input
-                  type="tel"
-                  placeholder="Phone (optional)"
-                  value={newCustomer.phone}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-body block text-xs font-medium text-[#5B564B] mb-1">
+                      First Name <span className="text-[#EF4444]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="First Name"
+                      value={newCustomer.first_name}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, first_name: e.target.value })}
+                      className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-1.5 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[6px] placeholder:text-[#8A8377]"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-body block text-xs font-medium text-[#5B564B] mb-1">
+                      Last Name <span className="text-[#EF4444]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Last Name"
+                      value={newCustomer.last_name}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, last_name: e.target.value })}
+                      className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-1.5 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[6px] placeholder:text-[#8A8377]"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="font-body block text-xs font-medium text-[#5B564B] mb-1">
+                    Email (optional)
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={newCustomer.email}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
+                    className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-1.5 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[6px] placeholder:text-[#8A8377]"
+                  />
+                </div>
+                <div>
+                  <label className="font-body block text-xs font-medium text-[#5B564B] mb-1">
+                    Phone (optional)
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="Phone number"
+                    value={newCustomer.phone}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
+                    className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-1.5 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[6px] placeholder:text-[#8A8377]"
+                  />
+                </div>
+                <div className="flex gap-2 pt-2">
                   <button
                     onClick={() => setShowNewForm(false)}
-                    className="flex-1 px-4 py-2 border rounded-lg"
+                    className="flex-1 font-body px-4 py-2 text-sm font-medium text-[#16302B] bg-[#F7F1E4] border border-[#DDD5C4] rounded-lg hover:bg-[#DDD5C4] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C9A468] focus:ring-offset-2"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleCreateCustomer}
-                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg"
+                    disabled={!newCustomer.first_name || !newCustomer.last_name}
+                    className="flex-1 font-body px-4 py-2 text-sm font-medium text-[#F7F1E4] bg-[#16302B] border border-transparent rounded-lg hover:bg-[#1D3B34] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C9A468] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Save Customer
                   </button>

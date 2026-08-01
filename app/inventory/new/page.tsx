@@ -14,8 +14,7 @@ export default function NewProductPage() {
   const createProduct = useCreateProduct();
   const { user } = useAuth();
 
-  // Check if user has permission to create products
-  const canCreate = user?.role === 'CEO' || user?.role === 'MANAGER'; // Use UPPERCASE to match backend roles
+  const canCreate = user?.role === 'CEO' || user?.role === 'MANAGER';
 
   const [formData, setFormData] = useState({
     name: '',
@@ -65,18 +64,17 @@ export default function NewProductPage() {
     { value: 'both', label: 'Both' },
   ];
 
-  // If user doesn't have permission, show access denied
   if (!canCreate) {
     return (
       <div className="max-w-2xl mx-auto pb-20">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <h2 className="text-lg font-semibold text-red-800 mb-2">Access Denied</h2>
-          <p className="text-sm text-red-600">
+        <div className="bg-[#FEF2F2] border border-[#FECACA] rounded-lg p-8 text-center">
+          <h2 className="font-display text-lg font-medium text-[#991B1B] mb-2">Access Denied</h2>
+          <p className="font-body text-sm text-[#991B1B]">
             You don't have permission to create new products. Only CEOs and Managers can add products.
           </p>
           <Link
             href="/inventory"
-            className="inline-block mt-4 text-red-600 hover:text-red-700 font-medium"
+            className="font-body inline-block mt-4 text-[#16302B] hover:text-[#1D3B34] font-medium underline decoration-[#C9A468] underline-offset-4"
           >
             Back to Inventory
           </Link>
@@ -89,7 +87,6 @@ export default function NewProductPage() {
     e.preventDefault();
     setErrors({});
     
-    // Validate required fields
     if (!formData.name) {
       toast.error('Product name is required');
       return;
@@ -112,21 +109,15 @@ export default function NewProductPage() {
         is_premium: formData.is_premium,
       };
       
-      console.log('Sending product data:', productData);
-      
       await createProduct.mutateAsync(productData);
-      // REMOVED: toast.success('Product created successfully!');
-      // The hook already shows this toast
       router.push('/inventory');
     } catch (error: any) {
       console.error('Failed to create product:', error);
       
-      // Handle validation errors from backend
       if (error.response?.data) {
         const backendErrors = error.response.data;
         
         if (typeof backendErrors === 'object') {
-          // Format validation errors
           const errorMessages: string[] = [];
           Object.keys(backendErrors).forEach(key => {
             const messages = backendErrors[key];
@@ -153,7 +144,6 @@ export default function NewProductPage() {
       ...prev,
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
     }));
-    // Clear error for this field when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -161,23 +151,25 @@ export default function NewProductPage() {
 
   return (
     <div className="max-w-2xl mx-auto pb-20">
-      <div className="mb-6">
+      {/* Header */}
+      <div className="mb-8 border-b border-[#DDD5C4] pb-6">
         <Link
           href="/inventory"
-          className="inline-flex items-center text-gray-600 hover:text-red-600 mb-4"
+          className="font-body inline-flex items-center text-[#8A8377] hover:text-[#16302B] mb-4 transition-colors"
         >
-          <ArrowLeftIcon className="h-4 w-4 mr-1" />
+          <ArrowLeftIcon className="h-4 w-4 mr-2" />
           Back to Inventory
         </Link>
-        <h1 className="text-2xl font-bold text-dark-500">Add New Product</h1>
-        <p className="text-sm text-gray-600">Create a new product in your inventory</p>
+        <h1 className="font-display text-2xl font-medium text-[#2A2622]">Add New Product</h1>
+        <p className="font-body text-sm text-[#8A8377] mt-1">Create a new product in your inventory</p>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      {/* Form */}
+      <div className="bg-white rounded-lg border border-[#DDD5C4] p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Product Name */}
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="name" className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
               Product Name *
             </label>
             <input
@@ -187,17 +179,17 @@ export default function NewProductPage() {
               value={formData.name}
               onChange={handleChange}
               required
-              className={`input-field ${errors.name ? 'border-red-500' : ''}`}
+              className={`font-body w-full border-0 border-b ${errors.name ? 'border-[#EF4444]' : 'border-[#DDD5C4]'} bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]`}
               placeholder="e.g., Guinness, Jameson, Coca-Cola"
             />
             {errors.name && (
-              <p className="mt-1 text-xs text-red-600">{errors.name}</p>
+              <p className="font-body mt-1 text-sm text-[#EF4444]">{errors.name}</p>
             )}
           </div>
 
-          {/* Location Selection */}
+          {/* Location */}
           <div>
-            <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="location" className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
               Location *
             </label>
             <select
@@ -206,7 +198,7 @@ export default function NewProductPage() {
               value={formData.location}
               onChange={handleChange}
               required
-              className="input-field"
+              className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px]"
             >
               {locations.map((loc) => (
                 <option key={loc.value} value={loc.value}>{loc.label}</option>
@@ -214,22 +206,22 @@ export default function NewProductPage() {
             </select>
           </div>
 
-          {/* Premium Toggle (for lounge items) */}
+          {/* Premium Toggle */}
           {formData.location === 'lounge' && (
-            <div className="flex items-center gap-3 p-4 bg-amber-50 rounded-lg border border-amber-200">
-              <StarIcon className="h-5 w-5 text-amber-600" />
+            <div className="flex items-start gap-3 p-4 bg-[#F7F1E4] rounded-lg border border-[#DDD5C4]">
+              <StarIcon className="h-5 w-5 text-[#C9A468] mt-0.5" />
               <div className="flex-1">
-                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <label className="font-body text-sm font-medium text-[#2A2622] flex items-center gap-3">
                   Premium Item
                   <input
                     type="checkbox"
                     name="is_premium"
                     checked={formData.is_premium}
                     onChange={handleChange}
-                    className="w-4 h-4 text-amber-600 rounded border-gray-300 focus:ring-amber-500"
+                    className="h-4 w-4 rounded-sm border-[#DDD5C4] text-[#C9A468] focus:ring-[#C9A468]"
                   />
                 </label>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="font-body text-xs text-[#8A8377] mt-1">
                   Premium items get a special badge and appear in premium collections
                 </p>
               </div>
@@ -239,7 +231,7 @@ export default function NewProductPage() {
           {/* Category and Unit */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="category" className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
                 Category *
               </label>
               <select
@@ -248,7 +240,7 @@ export default function NewProductPage() {
                 value={formData.category}
                 onChange={handleChange}
                 required
-                className="input-field"
+                className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px]"
               >
                 {categories.map((cat) => (
                   <option key={cat.value} value={cat.value}>{cat.label}</option>
@@ -257,7 +249,7 @@ export default function NewProductPage() {
             </div>
 
             <div>
-              <label htmlFor="unit" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="unit" className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
                 Unit *
               </label>
               <select
@@ -266,7 +258,7 @@ export default function NewProductPage() {
                 value={formData.unit}
                 onChange={handleChange}
                 required
-                className="input-field"
+                className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px]"
               >
                 {units.map((unit) => (
                   <option key={unit.value} value={unit.value}>{unit.label}</option>
@@ -278,7 +270,7 @@ export default function NewProductPage() {
           {/* Price and Min Stock */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="default_price" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="default_price" className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
                 Price (₦) *
               </label>
               <input
@@ -290,13 +282,13 @@ export default function NewProductPage() {
                 required
                 min="0"
                 step="0.01"
-                className="input-field"
+                className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]"
                 placeholder="0.00"
               />
             </div>
 
             <div>
-              <label htmlFor="min_stock_level" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="min_stock_level" className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
                 Minimum Stock Level *
               </label>
               <input
@@ -307,7 +299,7 @@ export default function NewProductPage() {
                 onChange={handleChange}
                 required
                 min="0"
-                className="input-field"
+                className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]"
                 placeholder="10"
               />
             </div>
@@ -315,7 +307,7 @@ export default function NewProductPage() {
 
           {/* Barcode */}
           <div>
-            <label htmlFor="barcode" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="barcode" className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
               Barcode (optional)
             </label>
             <input
@@ -324,23 +316,23 @@ export default function NewProductPage() {
               name="barcode"
               value={formData.barcode}
               onChange={handleChange}
-              className="input-field"
+              className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]"
               placeholder="Scan or type barcode"
             />
           </div>
 
-          {/* Submit Buttons */}
-          <div className="flex justify-end gap-3 pt-4">
+          {/* Buttons */}
+          <div className="flex justify-end gap-3 pt-4 border-t border-[#DDD5C4]">
             <Link
               href="/inventory"
-              className="btn-secondary"
+              className="font-body inline-flex items-center px-4 py-2 text-sm font-medium text-[#16302B] bg-[#F7F1E4] border border-[#DDD5C4] rounded-lg hover:bg-[#DDD5C4] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C9A468] focus:ring-offset-2"
             >
               Cancel
             </Link>
             <button
               type="submit"
               disabled={createProduct.isPending}
-              className="btn-primary"
+              className="font-body inline-flex items-center px-4 py-2 text-sm font-medium text-[#F7F1E4] bg-[#16302B] border border-transparent rounded-lg hover:bg-[#1D3B34] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C9A468] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {createProduct.isPending ? 'Creating...' : 'Create Product'}
             </button>

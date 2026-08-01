@@ -4,7 +4,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { passwordResetService } from '@/lib/api/passwordReset';
 
 function ResetPasswordForm() {
@@ -79,8 +79,15 @@ function ResetPasswordForm() {
   if (verifying) {
     return (
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Verifying your reset link...</p>
+        <div className="relative w-16 h-16 mx-auto">
+          <div className="w-16 h-16 rounded-full border-4 border-[#DDD5C4] border-t-[#16302B] animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[#16302B] flex items-center justify-center">
+              <span className="font-display text-sm font-bold text-[#C9A468]">H</span>
+            </div>
+          </div>
+        </div>
+        <p className="mt-4 font-body text-[#8A8377]">Verifying your reset link...</p>
       </div>
     );
   }
@@ -88,17 +95,15 @@ function ResetPasswordForm() {
   if (error && !tokenValid) {
     return (
       <div className="text-center">
-        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-          <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+        <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-[#FEF2F2]">
+          <XCircleIcon className="h-8 w-8 text-[#EF4444]" />
         </div>
-        <h3 className="mt-3 text-lg font-medium text-gray-900">Invalid Reset Link</h3>
-        <p className="mt-2 text-sm text-gray-500">{error}</p>
+        <h3 className="mt-4 font-display text-lg font-medium text-[#2A2622]">Invalid Reset Link</h3>
+        <p className="mt-2 font-body text-sm text-[#8A8377]">{error}</p>
         <div className="mt-6">
           <Link
             href="/forgot-password"
-            className="text-sm font-medium text-red-600 hover:text-red-500"
+            className="font-body text-sm font-medium text-[#16302B] hover:text-[#1D3B34] underline decoration-[#C9A468] underline-offset-4"
           >
             Request a new reset link
           </Link>
@@ -110,15 +115,18 @@ function ResetPasswordForm() {
   if (success) {
     return (
       <div className="text-center">
-        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
-          <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-          </svg>
+        <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-[#D1FAE5]">
+          <CheckCircleIcon className="h-8 w-8 text-[#10B981]" />
         </div>
-        <h3 className="mt-3 text-lg font-medium text-gray-900">Password Reset Successfully</h3>
-        <p className="mt-2 text-sm text-gray-500">
+        <h3 className="mt-4 font-display text-lg font-medium text-[#2A2622]">Password Reset Successfully</h3>
+        <p className="mt-2 font-body text-sm text-[#8A8377]">
           Your password has been reset. Redirecting you to the login page...
         </p>
+        <div className="mt-4">
+          <div className="w-full bg-[#F7F1E4] rounded-full h-1.5">
+            <div className="bg-[#16302B] h-1.5 rounded-full animate-[progress_3s_ease-in-out]"></div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -126,10 +134,10 @@ function ResetPasswordForm() {
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="password" className="font-body block text-sm font-medium text-[#5B564B]">
           New Password
         </label>
-        <div className="mt-1 relative">
+        <div className="mt-1.5 relative">
           <input
             id="password"
             name="password"
@@ -137,29 +145,29 @@ function ResetPasswordForm() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="input-field pr-10"
+            className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent pr-10 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]"
             placeholder="Enter new password"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+            className="absolute inset-y-0 right-0 pr-0 flex items-center text-[#8A8377] hover:text-[#2A2622] transition-colors"
           >
             {showPassword ? (
-              <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+              <EyeSlashIcon className="h-5 w-5" />
             ) : (
-              <EyeIcon className="h-5 w-5 text-gray-400" />
+              <EyeIcon className="h-5 w-5" />
             )}
           </button>
         </div>
-        <p className="mt-1 text-xs text-gray-500">Must be at least 8 characters</p>
+        <p className="mt-1 font-body text-xs text-[#8A8377]">Must be at least 8 characters</p>
       </div>
 
       <div>
-        <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="confirm-password" className="font-body block text-sm font-medium text-[#5B564B]">
           Confirm New Password
         </label>
-        <div className="mt-1 relative">
+        <div className="mt-1.5 relative">
           <input
             id="confirm-password"
             name="confirm-password"
@@ -167,34 +175,31 @@ function ResetPasswordForm() {
             required
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="input-field pr-10"
+            className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent pr-10 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]"
             placeholder="Confirm your new password"
           />
           <button
             type="button"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+            className="absolute inset-y-0 right-0 pr-0 flex items-center text-[#8A8377] hover:text-[#2A2622] transition-colors"
           >
             {showConfirmPassword ? (
-              <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+              <EyeSlashIcon className="h-5 w-5" />
             ) : (
-              <EyeIcon className="h-5 w-5 text-gray-400" />
+              <EyeIcon className="h-5 w-5" />
             )}
           </button>
         </div>
+        {password && confirmPassword && password !== confirmPassword && (
+          <p className="mt-1 font-body text-xs text-[#EF4444]">Passwords do not match</p>
+        )}
       </div>
 
       {error && (
-        <div className="rounded-md bg-red-50 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
+        <div className="rounded-lg bg-[#FEF2F2] border border-[#FECACA] p-4">
+          <div className="flex items-start gap-3">
+            <XCircleIcon className="h-5 w-5 text-[#EF4444] flex-shrink-0 mt-0.5" />
+            <p className="font-body text-sm text-[#991B1B]">{error}</p>
           </div>
         </div>
       )}
@@ -203,10 +208,29 @@ function ResetPasswordForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+          className="font-body w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-[#F7F1E4] bg-[#16302B] hover:bg-[#1D3B34] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C9A468] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {loading ? 'Resetting password...' : 'Reset password'}
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <svg className="animate-spin h-4 w-4 text-[#F7F1E4]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Resetting password...
+            </span>
+          ) : (
+            'Reset password'
+          )}
         </button>
+      </div>
+
+      <div className="text-center">
+        <Link
+          href="/login"
+          className="font-body text-sm text-[#8A8377] hover:text-[#16302B] transition-colors"
+        >
+          Back to login
+        </Link>
       </div>
     </form>
   );
@@ -214,26 +238,37 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF6EF] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="text-center">
-          <h1 className="text-3xl font-bold">
-            <span className="text-red-600">Hotel</span>
-            <span className="text-dark-500">Manager</span>
-          </h1>
-          <h2 className="mt-6 text-2xl font-semibold text-dark-500">Create new password</h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <div className="flex items-center justify-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#16302B]">
+              <span className="font-display text-xl font-bold text-[#C9A468]">H</span>
+            </div>
+            <h1 className="font-display text-3xl font-medium text-[#2A2622]">
+              Hotel <span className="text-[#C9A468]">Manager</span>
+            </h1>
+          </div>
+          <h2 className="mt-6 font-display text-2xl font-medium text-[#2A2622]">Create new password</h2>
+          <p className="mt-2 font-body text-sm text-[#8A8377]">
             Enter your new password below
           </p>
         </div>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="bg-white py-8 px-6 shadow-sm border border-[#DDD5C4] rounded-lg sm:px-10">
           <Suspense fallback={
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading...</p>
+              <div className="relative w-16 h-16 mx-auto">
+                <div className="w-16 h-16 rounded-full border-4 border-[#DDD5C4] border-t-[#16302B] animate-spin"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-[#16302B] flex items-center justify-center">
+                    <span className="font-display text-sm font-bold text-[#C9A468]">H</span>
+                  </div>
+                </div>
+              </div>
+              <p className="mt-4 font-body text-[#8A8377]">Loading...</p>
             </div>
           }>
             <ResetPasswordForm />

@@ -26,26 +26,16 @@ export default function SettingsPage() {
   // Profile form state
   const [firstName, setFirstName] = useState(user?.first_name || '');
   const [lastName, setLastName] = useState(user?.last_name || '');
-  const [email, setEmail] = useState(user?.email || '');
-  const [username, setUsername] = useState(user?.username || '');
   
   // Password form state
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   
-  // Verification state for sensitive changes
-  const [verifyPassword, setVerifyPassword] = useState('');
-  const [pendingChanges, setPendingChanges] = useState<{
-    type: 'profile' | 'email' | 'username';
-    data: any;
-  } | null>(null);
-  
   // UI states
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showVerifyPassword, setShowVerifyPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
   
@@ -53,13 +43,11 @@ export default function SettingsPage() {
   const hasProfileChanges = () => {
     return (
       firstName !== (user?.first_name || '') ||
-      lastName !== (user?.last_name || '') ||
-      email !== (user?.email || '') ||
-      username !== (user?.username || '')
+      lastName !== (user?.last_name || '')
     );
   };
   
-  // Handle profile update with verification
+  // Handle profile update
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -68,24 +56,10 @@ export default function SettingsPage() {
       return;
     }
     
-    // Check if email or username changed (require password verification)
-    const emailChanged = email !== (user?.email || '');
-    const usernameChanged = username !== (user?.username || '');
-    
-    if (emailChanged || usernameChanged) {
-      // Show password verification modal
-      setPendingChanges({
-        type: emailChanged ? 'email' : 'username',
-        data: { firstName, lastName, email, username }
-      });
-      return;
-    }
-    
-    // Simple profile update (no password needed)
     await saveProfileChanges();
   };
   
-  const saveProfileChanges = async (password?: string) => {
+  const saveProfileChanges = async () => {
     setLoading(true);
     try {
       const updateData: any = {
@@ -93,21 +67,8 @@ export default function SettingsPage() {
         last_name: lastName,
       };
       
-      // Only include email/username if they changed and we have password
-      if (email !== (user?.email || '')) {
-        updateData.email = email;
-        if (password) updateData.password = password;
-      }
-      
-      if (username !== (user?.username || '')) {
-        updateData.username = username;
-        if (password) updateData.password = password;
-      }
-      
       await updateProfile(updateData);
       toast.success('Profile updated successfully');
-      setPendingChanges(null);
-      setVerifyPassword('');
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to update profile');
     } finally {
@@ -141,7 +102,6 @@ export default function SettingsPage() {
       setNewPassword('');
       setConfirmPassword('');
       
-      // Optional: Log out after 3 seconds to force login with new password
       setTimeout(() => {
         toast.success('Please login with your new password');
         logout();
@@ -205,6 +165,44 @@ export default function SettingsPage() {
           {activeTab === 'profile' && (
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
               <form onSubmit={handleProfileUpdate} className="p-6 space-y-6">
+                {/* Read-only Username */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Username
+                  </label>
+                  <div className="relative">
+                    <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="text"
+                      value={user?.username || ''}
+                      disabled
+                      className="input-field pl-10 bg-gray-50 cursor-not-allowed"
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Username cannot be changed
+                  </p>
+                </div>
+                
+                {/* Read-only Email */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <EnvelopeIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="email"
+                      value={user?.email || ''}
+                      disabled
+                      className="input-field pl-10 bg-gray-50 cursor-not-allowed"
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Email address cannot be changed
+                  </p>
+                </div>
+                
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -231,48 +229,6 @@ export default function SettingsPage() {
                       placeholder="Enter last name"
                     />
                   </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Username
-                  </label>
-                  <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input
-                      type="text"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      className="input-field pl-10"
-                      placeholder="Enter username"
-                    />
-                  </div>
-                  {username !== user?.username && (
-                    <p className="mt-1 text-xs text-amber-600">
-                      Changing username will require password verification
-                    </p>
-                  )}
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <EnvelopeIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="input-field pl-10"
-                      placeholder="Enter email address"
-                    />
-                  </div>
-                  {email !== user?.email && (
-                    <p className="mt-1 text-xs text-amber-600">
-                      Changing email will require password verification
-                    </p>
-                  )}
                 </div>
                 
                 <div className="pt-4 border-t border-gray-200">
@@ -421,79 +377,6 @@ export default function SettingsPage() {
             </button>
           </div>
         </div>
-        
-        {/* Password Verification Modal */}
-        {pendingChanges && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-md w-full p-6">
-              <div className="text-center mb-4">
-                <ShieldCheckIcon className="h-12 w-12 text-red-600 mx-auto mb-3" />
-                <h3 className="text-lg font-semibold text-gray-900">Verify Your Identity</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  Please enter your password to change your {pendingChanges.type === 'email' ? 'email address' : 'username'}
-                </p>
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Current Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showVerifyPassword ? 'text' : 'password'}
-                    value={verifyPassword}
-                    onChange={(e) => setVerifyPassword(e.target.value)}
-                    className="input-field pr-10"
-                    placeholder="Enter your password"
-                    autoFocus
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowVerifyPassword(!showVerifyPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  >
-                    {showVerifyPassword ? (
-                      <EyeSlashIcon className="h-5 w-5 text-gray-400" />
-                    ) : (
-                      <EyeIcon className="h-5 w-5 text-gray-400" />
-                    )}
-                  </button>
-                </div>
-              </div>
-              
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setPendingChanges(null);
-                    setVerifyPassword('');
-                  }}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => saveProfileChanges(verifyPassword)}
-                  disabled={!verifyPassword || loading}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
-                >
-                  {loading ? 'Verifying...' : 'Confirm Changes'}
-                </button>
-              </div>
-              
-              <p className="text-xs text-center text-gray-500 mt-4">
-                Forgot your password? <button
-                  onClick={() => {
-                    setPendingChanges(null);
-                    router.push('/forgot-password');
-                  }}
-                  className="text-red-600 hover:underline"
-                >
-                  Reset it here
-                </button>
-              </p>
-            </div>
-          </div>
-        )}
       </Layout>
     </ProtectedRoute>
   );

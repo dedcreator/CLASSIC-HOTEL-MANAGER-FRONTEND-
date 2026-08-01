@@ -7,11 +7,10 @@ import { useState, useEffect } from 'react';
 
 // Component to handle global refetch on window focus
 function WindowFocusHandler() {
-  const queryClient = useQueryClient(); // Use useQueryClient instead of QueryClientProvider.useContext()
+  const queryClient = useQueryClient();
   
   useEffect(() => {
     const handleFocus = () => {
-      // Refetch all active queries when window regains focus
       queryClient.refetchQueries();
     };
     
@@ -29,12 +28,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000, // 1 minute - data considered fresh for 1 minute
-            gcTime: 5 * 60 * 1000, // 5 minutes - keep in cache for 5 minutes
+            staleTime: 60 * 1000,
+            gcTime: 5 * 60 * 1000,
             retry: 1,
-            refetchOnWindowFocus: true, // Refetch when window regains focus
-            refetchOnReconnect: true, // Refetch when reconnecting to internet
-            refetchOnMount: true, // Refetch when component mounts
+            refetchOnWindowFocus: true,
+            refetchOnReconnect: true,
+            refetchOnMount: true,
           },
         },
       })
@@ -49,10 +48,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         toastOptions={{
           duration: 4000,
           style: {
-            background: '#1A1A1A',
-            color: '#FFFFFF',
-            border: '1px solid #E53E3E',
+            background: '#FFFFFF',
+            color: '#2A2622',
+            border: '1px solid #DDD5C4',
             borderRadius: '8px',
+            padding: '16px',
+            fontFamily: "'Work Sans', sans-serif",
           },
           success: {
             iconTheme: {
@@ -60,24 +61,27 @@ export default function Providers({ children }: { children: React.ReactNode }) {
               secondary: '#FFFFFF',
             },
             style: {
-              background: '#1A1A1A',
+              background: '#FFFFFF',
               border: '1px solid #10B981',
+              color: '#065F46',
             },
           },
           error: {
             iconTheme: {
-              primary: '#E53E3E',
+              primary: '#EF4444',
               secondary: '#FFFFFF',
             },
             style: {
-              background: '#1A1A1A',
-              border: '1px solid #E53E3E',
+              background: '#FFFFFF',
+              border: '1px solid #EF4444',
+              color: '#991B1B',
             },
           },
           loading: {
             style: {
-              background: '#1A1A1A',
-              border: '1px solid #F59E0B',
+              background: '#FFFFFF',
+              border: '1px solid #C9A468',
+              color: '#2A2622',
             },
           },
         }}

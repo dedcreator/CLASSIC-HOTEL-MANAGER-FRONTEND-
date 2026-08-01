@@ -8,7 +8,6 @@ import { ArrowLeftIcon, StarIcon } from '@heroicons/react/24/outline';
 import { useProduct, useUpdateProduct } from '@/lib/api/hooks/useProducts';
 import Layout from '@/components/layout/Layout';
 
-// Define types to match your Product interface
 type ProductCategory = 'beer' | 'wine' | 'spirit' | 'soft_drink' | 'juice' | 'cocktail' | 'food' | 'other';
 type ProductUnit = 'bottle' | 'pint' | 'glass' | 'can' | 'shot' | 'plate' | 'unit';
 type ProductLocation = 'bar' | 'lounge' | 'both';
@@ -80,7 +79,6 @@ export default function EditProductPage() {
     e.preventDefault();
     
     try {
-      // Prepare the data to send - only include fields that have changed
       const updateData = {
         id: productId,
         name: formData.name,
@@ -93,8 +91,6 @@ export default function EditProductPage() {
         is_premium: formData.is_premium,
       };
 
-      console.log('Sending update data:', updateData);
-      
       await updateProduct.mutateAsync(updateData);
       router.push(`/inventory/${productId}`);
     } catch (error: any) {
@@ -121,10 +117,10 @@ export default function EditProductPage() {
       <Layout>
         <div className="max-w-2xl mx-auto py-8 px-4">
           <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-            <div className="bg-white rounded-lg p-6 space-y-4">
-              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+            <div className="h-8 bg-[#F7F1E4] rounded w-1/4"></div>
+            <div className="bg-white rounded-lg border border-[#DDD5C4] p-6 space-y-4">
+              <div className="h-4 bg-[#F7F1E4] rounded w-1/2"></div>
+              <div className="h-4 bg-[#F7F1E4] rounded w-1/3"></div>
             </div>
           </div>
         </div>
@@ -136,9 +132,9 @@ export default function EditProductPage() {
     return (
       <Layout>
         <div className="max-w-2xl mx-auto py-16 text-center px-4">
-          <h2 className="text-2xl font-bold text-dark-500 mb-2">Product Not Found</h2>
-          <p className="text-gray-600 mb-6">The product you're trying to edit doesn't exist.</p>
-          <Link href="/inventory" className="inline-flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700">
+          <h2 className="font-display text-2xl font-medium text-[#2A2622] mb-2">Product Not Found</h2>
+          <p className="font-body text-[#8A8377] mb-6">The product you're trying to edit doesn't exist.</p>
+          <Link href="/inventory" className="font-body inline-flex items-center gap-2 px-6 py-3 text-[#F7F1E4] bg-[#16302B] rounded-lg hover:bg-[#1D3B34] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C9A468] focus:ring-offset-2">
             <ArrowLeftIcon className="h-4 w-4" />
             Back to Inventory
           </Link>
@@ -150,25 +146,36 @@ export default function EditProductPage() {
   return (
     <Layout>
       <div className="max-w-2xl mx-auto py-8 px-4">
-        <Link
-          href={`/inventory/${productId}`}
-          className="inline-flex items-center text-gray-600 hover:text-red-600 mb-6 group"
-        >
-          <ArrowLeftIcon className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
-          Back to Product
-        </Link>
+        {/* Header */}
+        <div className="mb-8 border-b border-[#DDD5C4] pb-6">
+          <Link
+            href={`/inventory/${productId}`}
+            className="font-body inline-flex items-center text-[#8A8377] hover:text-[#16302B] mb-4 transition-colors group"
+          >
+            <ArrowLeftIcon className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
+            Back to Product
+          </Link>
 
-        <div className="bg-gradient-to-r from-red-600 to-red-500 rounded-xl p-6 text-white mb-6">
-          <h1 className="text-2xl font-bold">Edit Product</h1>
-          <p className="text-red-100 mt-1">{product.name}</p>
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#16302B]">
+              <span className="font-display text-lg font-semibold text-[#C9A468]">
+                {product.name.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div>
+              <h1 className="font-display text-2xl font-medium text-[#2A2622]">Edit Product</h1>
+              <p className="font-body text-sm text-[#8A8377]">{product.name}</p>
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        {/* Form */}
+        <div className="bg-white rounded-lg border border-[#DDD5C4] p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Product Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Product Name <span className="text-red-500">*</span>
+              <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
+                Product Name <span className="text-[#EF4444]">*</span>
               </label>
               <input
                 type="text"
@@ -176,21 +183,24 @@ export default function EditProductPage() {
                 value={formData.name}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className={`font-body w-full border-0 border-b ${errors.name ? 'border-[#EF4444]' : 'border-[#DDD5C4]'} bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]`}
               />
+              {errors.name && (
+                <p className="font-body mt-1 text-sm text-[#EF4444]">{errors.name}</p>
+              )}
             </div>
 
-            {/* Location Selection */}
+            {/* Location */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Location <span className="text-red-500">*</span>
+              <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
+                Location <span className="text-[#EF4444]">*</span>
               </label>
               <select
                 name="location"
                 value={formData.location}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px]"
               >
                 {locations.map((loc) => (
                   <option key={loc.value} value={loc.value}>{loc.label}</option>
@@ -198,21 +208,24 @@ export default function EditProductPage() {
               </select>
             </div>
 
-            {/* Premium Toggle (for lounge items) */}
+            {/* Premium Toggle */}
             {formData.location === 'lounge' && (
-              <div className="flex items-center gap-3 p-4 bg-amber-50 rounded-lg border border-amber-200">
-                <StarIcon className="h-5 w-5 text-amber-600" />
+              <div className="flex items-start gap-3 p-4 bg-[#F7F1E4] rounded-lg border border-[#DDD5C4]">
+                <StarIcon className="h-5 w-5 text-[#C9A468] mt-0.5" />
                 <div className="flex-1">
-                  <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <label className="font-body text-sm font-medium text-[#2A2622] flex items-center gap-3">
                     Premium Item
                     <input
                       type="checkbox"
                       name="is_premium"
                       checked={formData.is_premium}
                       onChange={handleChange}
-                      className="w-4 h-4 text-amber-600 rounded border-gray-300 focus:ring-amber-500"
+                      className="h-4 w-4 rounded-sm border-[#DDD5C4] text-[#C9A468] focus:ring-[#C9A468]"
                     />
                   </label>
+                  <p className="font-body text-xs text-[#8A8377] mt-1">
+                    Premium items get a special badge and appear in premium collections
+                  </p>
                 </div>
               </div>
             )}
@@ -220,15 +233,15 @@ export default function EditProductPage() {
             {/* Category and Unit */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category <span className="text-red-500">*</span>
+                <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
+                  Category <span className="text-[#EF4444]">*</span>
                 </label>
                 <select
                   name="category"
                   value={formData.category}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px]"
                 >
                   {categories.map((cat) => (
                     <option key={cat.value} value={cat.value}>{cat.label}</option>
@@ -237,15 +250,15 @@ export default function EditProductPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Unit <span className="text-red-500">*</span>
+                <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
+                  Unit <span className="text-[#EF4444]">*</span>
                 </label>
                 <select
                   name="unit"
                   value={formData.unit}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px]"
                 >
                   {units.map((unit) => (
                     <option key={unit.value} value={unit.value}>{unit.label}</option>
@@ -257,8 +270,8 @@ export default function EditProductPage() {
             {/* Price and Min Stock */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Price (₦) <span className="text-red-500">*</span>
+                <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
+                  Price (₦) <span className="text-[#EF4444]">*</span>
                 </label>
                 <input
                   type="number"
@@ -268,13 +281,17 @@ export default function EditProductPage() {
                   required
                   min="0"
                   step="0.01"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className={`font-body w-full border-0 border-b ${errors.default_price ? 'border-[#EF4444]' : 'border-[#DDD5C4]'} bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]`}
+                  placeholder="0.00"
                 />
+                {errors.default_price && (
+                  <p className="font-body mt-1 text-sm text-[#EF4444]">{errors.default_price}</p>
+                )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Minimum Stock Level <span className="text-red-500">*</span>
+                <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
+                  Minimum Stock Level <span className="text-[#EF4444]">*</span>
                 </label>
                 <input
                   type="number"
@@ -283,14 +300,18 @@ export default function EditProductPage() {
                   onChange={handleChange}
                   required
                   min="0"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className={`font-body w-full border-0 border-b ${errors.min_stock_level ? 'border-[#EF4444]' : 'border-[#DDD5C4]'} bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]`}
+                  placeholder="10"
                 />
+                {errors.min_stock_level && (
+                  <p className="font-body mt-1 text-sm text-[#EF4444]">{errors.min_stock_level}</p>
+                )}
               </div>
             </div>
 
             {/* Barcode */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
                 Barcode
               </label>
               <input
@@ -298,23 +319,26 @@ export default function EditProductPage() {
                 name="barcode"
                 value={formData.barcode}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className={`font-body w-full border-0 border-b ${errors.barcode ? 'border-[#EF4444]' : 'border-[#DDD5C4]'} bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]`}
                 placeholder="Scan or type barcode"
               />
+              {errors.barcode && (
+                <p className="font-body mt-1 text-sm text-[#EF4444]">{errors.barcode}</p>
+              )}
             </div>
 
             {/* Form Actions */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <div className="flex justify-end gap-3 pt-4 border-t border-[#DDD5C4]">
               <Link
                 href={`/inventory/${productId}`}
-                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                className="font-body px-6 py-2 text-sm font-medium text-[#16302B] bg-[#F7F1E4] border border-[#DDD5C4] rounded-lg hover:bg-[#DDD5C4] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C9A468] focus:ring-offset-2"
               >
                 Cancel
               </Link>
               <button
                 type="submit"
                 disabled={updateProduct.isPending}
-                className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+                className="font-body px-6 py-2 text-sm font-medium text-[#F7F1E4] bg-[#16302B] border border-transparent rounded-lg hover:bg-[#1D3B34] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C9A468] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {updateProduct.isPending ? 'Saving...' : 'Save Changes'}
               </button>

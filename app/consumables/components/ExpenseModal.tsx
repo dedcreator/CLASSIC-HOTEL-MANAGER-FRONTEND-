@@ -105,30 +105,38 @@ export default function ExpenseModal({ expense, onClose, onSuccess }: ExpenseMod
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-[#2A2622]/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-red-600 to-red-500 text-white p-4 flex justify-between items-center rounded-t-2xl">
-          <h2 className="text-lg font-semibold">
-            {expense ? 'Edit Expense' : 'Record New Expense'}
-          </h2>
-          <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-full">
+        <div className="sticky top-0 bg-[#16302B] text-[#F7F1E4] p-5 flex justify-between items-center rounded-t-lg border-b border-[#DDD5C4]">
+          <div>
+            <h2 className="font-display text-xl font-medium">
+              {expense ? 'Edit Expense' : 'Record New Expense'}
+            </h2>
+            <p className="font-body text-sm text-[#B9C4B9] mt-0.5">
+              {expense ? 'Update expense details' : 'Track a new business expense'}
+            </p>
+          </div>
+          <button 
+            onClick={onClose} 
+            className="p-1.5 hover:bg-[#1D3B34] rounded-lg transition-colors"
+          >
             <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* Category Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Category <span className="text-red-500">*</span>
+            <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
+              Category <span className="text-[#EF4444]">*</span>
             </label>
             {!showNewCategory ? (
               <div className="flex gap-2">
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                  className="font-body flex-1 border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px]"
                   required
                 >
                   <option value="">Select a category</option>
@@ -139,40 +147,40 @@ export default function ExpenseModal({ expense, onClose, onSuccess }: ExpenseMod
                 <button
                   type="button"
                   onClick={() => setShowNewCategory(true)}
-                  className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-1"
+                  className="font-body inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-[#16302B] bg-[#F7F1E4] border border-[#DDD5C4] rounded-lg hover:bg-[#DDD5C4] transition-colors whitespace-nowrap"
                 >
-                  <PlusIcon className="h-5 w-5" />
+                  <PlusIcon className="h-4 w-4" />
                   New
                 </button>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <input
                   type="text"
                   placeholder="Category Name"
                   value={newCategory.name}
                   onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                  className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]"
                 />
                 <input
                   type="text"
                   placeholder="Description (optional)"
                   value={newCategory.description}
                   onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                  className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]"
                 />
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={handleCreateCategory}
-                    className="flex-1 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                    className="flex-1 font-body px-4 py-2 text-sm font-medium text-[#F7F1E4] bg-[#16302B] border border-transparent rounded-lg hover:bg-[#1D3B34] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C9A468] focus:ring-offset-2"
                   >
                     Save Category
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowNewCategory(false)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    className="flex-1 font-body px-4 py-2 text-sm font-medium text-[#16302B] bg-[#F7F1E4] border border-[#DDD5C4] rounded-lg hover:bg-[#DDD5C4] transition-colors"
                   >
                     Cancel
                   </button>
@@ -183,24 +191,24 @@ export default function ExpenseModal({ expense, onClose, onSuccess }: ExpenseMod
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description <span className="text-red-500">*</span>
+            <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
+              Description <span className="text-[#EF4444]">*</span>
             </label>
             <input
               type="text"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="e.g., Office supplies, Electricity bill, etc."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+              className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]"
               required
             />
           </div>
 
           {/* Amount and Date */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Amount (₦) <span className="text-red-500">*</span>
+              <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
+                Amount (₦) <span className="text-[#EF4444]">*</span>
               </label>
               <input
                 type="number"
@@ -209,34 +217,34 @@ export default function ExpenseModal({ expense, onClose, onSuccess }: ExpenseMod
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                 placeholder="0.00"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Expense Date <span className="text-red-500">*</span>
+              <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
+                Expense Date <span className="text-[#EF4444]">*</span>
               </label>
               <input
                 type="date"
                 value={formData.expense_date}
                 onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px]"
                 required
               />
             </div>
           </div>
 
           {/* Payment Method and Receipt */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
                 Payment Method
               </label>
               <select
                 value={formData.payment_method}
                 onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px]"
               >
                 <option value="cash">Cash</option>
                 <option value="card">Card</option>
@@ -245,7 +253,7 @@ export default function ExpenseModal({ expense, onClose, onSuccess }: ExpenseMod
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
                 Receipt Number
               </label>
               <input
@@ -253,14 +261,14 @@ export default function ExpenseModal({ expense, onClose, onSuccess }: ExpenseMod
                 value={formData.receipt_number}
                 onChange={(e) => setFormData({ ...formData, receipt_number: e.target.value })}
                 placeholder="Optional"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]"
               />
             </div>
           </div>
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
               Notes
             </label>
             <textarea
@@ -268,20 +276,20 @@ export default function ExpenseModal({ expense, onClose, onSuccess }: ExpenseMod
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={3}
               placeholder="Additional details..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+              className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377] resize-none"
             />
           </div>
 
           {/* Recurring Expense */}
-          <div className="border-t pt-4">
-            <label className="flex items-center gap-2">
+          <div className="border-t border-[#DDD5C4] pt-4">
+            <label className="font-body flex items-center gap-2 text-sm font-medium text-[#5B564B]">
               <input
                 type="checkbox"
                 checked={formData.is_recurring}
                 onChange={(e) => setFormData({ ...formData, is_recurring: e.target.checked })}
-                className="w-4 h-4 text-red-600 rounded"
+                className="h-4 w-4 rounded-sm border-[#DDD5C4] text-[#C9A468] focus:ring-[#C9A468]"
               />
-              <span className="text-sm font-medium text-gray-700">This is a recurring expense</span>
+              This is a recurring expense
             </label>
 
             {formData.is_recurring && (
@@ -289,7 +297,7 @@ export default function ExpenseModal({ expense, onClose, onSuccess }: ExpenseMod
                 <select
                   value={formData.recurring_frequency}
                   onChange={(e) => setFormData({ ...formData, recurring_frequency: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                  className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px]"
                 >
                   <option value="">Select frequency</option>
                   <option value="daily">Daily</option>
@@ -302,18 +310,18 @@ export default function ExpenseModal({ expense, onClose, onSuccess }: ExpenseMod
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-4 border-t">
+          <div className="flex gap-3 pt-4 border-t border-[#DDD5C4]">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              className="flex-1 font-body px-4 py-2 text-sm font-medium text-[#16302B] bg-[#F7F1E4] border border-[#DDD5C4] rounded-lg hover:bg-[#DDD5C4] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C9A468] focus:ring-offset-2"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={createExpense.isPending || updateExpense.isPending}
-              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+              className="flex-1 font-body px-4 py-2 text-sm font-medium text-[#F7F1E4] bg-[#16302B] border border-transparent rounded-lg hover:bg-[#1D3B34] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C9A468] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {createExpense.isPending || updateExpense.isPending ? 'Saving...' : (expense ? 'Update Expense' : 'Save Expense')}
             </button>

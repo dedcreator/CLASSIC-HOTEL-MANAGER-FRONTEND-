@@ -34,7 +34,6 @@ export default function NewBookingPage() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [selectedGuest, setSelectedGuest] = useState<any>(null);
   
-  // Guest form state
   const [guestData, setGuestData] = useState({
     first_name: '',
     last_name: '',
@@ -42,7 +41,6 @@ export default function NewBookingPage() {
     phone: '',
   });
 
-  // Booking form state
   const [formData, setFormData] = useState({
     room_id: '',
     check_in: '',
@@ -57,7 +55,6 @@ export default function NewBookingPage() {
   const [totalAmount, setTotalAmount] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
 
-  // Search guests
   const { data: searchData, refetch: performSearch } = useSearchGuests(searchQuery);
 
   useEffect(() => {
@@ -79,7 +76,6 @@ export default function NewBookingPage() {
     }
   }, [searchData]);
 
-  // Calculate nights and total when dates change
   useEffect(() => {
     if (formData.check_in && formData.check_out) {
       const start = new Date(formData.check_in);
@@ -89,7 +85,6 @@ export default function NewBookingPage() {
     }
   }, [formData.check_in, formData.check_out]);
 
-  // Calculate total amount when room or nights change
   useEffect(() => {
     if (formData.room_id && nights > 0) {
       const selectedRoom = availableRooms.find(r => r.id === formData.room_id);
@@ -107,7 +102,6 @@ export default function NewBookingPage() {
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
-    // Clear error for this field
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -168,7 +162,7 @@ export default function NewBookingPage() {
       
       setSelectedGuest(guest);
       toast.success('Guest created successfully');
-      setActiveTab('search'); // Switch back to search tab to show selected guest
+      setActiveTab('search');
     } catch (error: any) {
       console.error('Failed to create guest:', error);
       toast.error(error.response?.data?.message || 'Failed to create guest');
@@ -228,50 +222,50 @@ export default function NewBookingPage() {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto pb-20">
+      <div className="max-w-4xl mx-auto pb-20 px-4">
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-8 border-b border-[#DDD5C4] pb-6">
           <Link
             href="/bookings"
-            className="inline-flex items-center text-gray-600 hover:text-red-600 mb-4 group"
+            className="font-body inline-flex items-center text-[#8A8377] hover:text-[#16302B] mb-4 transition-colors group"
           >
-            <ArrowLeftIcon className="h-4 w-4 mr-1 transition-transform group-hover:-translate-x-1" />
+            <ArrowLeftIcon className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
             Back to Bookings
           </Link>
-          
-          <div className="bg-gradient-to-r from-red-600 to-red-500 rounded-xl p-6 text-white">
-            <h1 className="text-2xl font-bold">New Booking</h1>
-            <p className="text-red-100 mt-1">Create a new reservation</p>
+
+          <div>
+            <h1 className="font-display text-2xl font-medium text-[#2A2622]">New Booking</h1>
+            <p className="font-body text-sm text-[#8A8377] mt-1">Create a new reservation</p>
           </div>
         </div>
 
         {/* Main Form */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-lg border border-[#DDD5C4] overflow-hidden">
           {/* Header Tabs */}
-          <div className="flex border-b border-gray-200">
+          <div className="flex border-b border-[#DDD5C4] bg-[#FAF6EF]">
             <button
               onClick={() => setActiveTab('search')}
-              className={`flex-1 py-4 px-6 text-sm font-medium transition-colors ${
+              className={`flex-1 py-4 px-6 font-body text-sm font-medium transition-colors ${
                 activeTab === 'search'
-                  ? 'text-red-600 border-b-2 border-red-600 bg-red-50'
-                  : 'text-gray-600 hover:text-red-600 hover:bg-gray-50'
+                  ? 'text-[#16302B] border-b-2 border-[#C9A468] bg-white'
+                  : 'text-[#8A8377] hover:text-[#16302B] hover:bg-white/50'
               }`}
             >
               <div className="flex items-center justify-center gap-2">
-                <MagnifyingGlassIcon className="h-5 w-5" />
+                <MagnifyingGlassIcon className={`h-5 w-5 ${activeTab === 'search' ? 'text-[#C9A468]' : 'text-[#8A8377]'}`} />
                 Search Existing Guest
               </div>
             </button>
             <button
               onClick={() => setActiveTab('new')}
-              className={`flex-1 py-4 px-6 text-sm font-medium transition-colors ${
+              className={`flex-1 py-4 px-6 font-body text-sm font-medium transition-colors ${
                 activeTab === 'new'
-                  ? 'text-red-600 border-b-2 border-red-600 bg-red-50'
-                  : 'text-gray-600 hover:text-red-600 hover:bg-gray-50'
+                  ? 'text-[#16302B] border-b-2 border-[#C9A468] bg-white'
+                  : 'text-[#8A8377] hover:text-[#16302B] hover:bg-white/50'
               }`}
             >
               <div className="flex items-center justify-center gap-2">
-                <PlusCircleIcon className="h-5 w-5" />
+                <PlusCircleIcon className={`h-5 w-5 ${activeTab === 'new' ? 'text-[#C9A468]' : 'text-[#8A8377]'}`} />
                 Create New Guest
               </div>
             </button>
@@ -280,25 +274,25 @@ export default function NewBookingPage() {
           <div className="p-6">
             {/* Selected Guest Indicator */}
             {selectedGuest && (
-              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="mb-6 p-4 bg-[#D1FAE5] border border-[#6EE7B7] rounded-lg">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                      <CheckCircleIcon className="h-5 w-5 text-green-600" />
+                    <div className="w-10 h-10 bg-[#A7F3D0] rounded-full flex items-center justify-center">
+                      <CheckCircleIcon className="h-5 w-5 text-[#065F46]" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Selected Guest</p>
-                      <p className="font-semibold text-dark-500">
+                      <p className="font-body text-sm text-[#065F46]">Selected Guest</p>
+                      <p className="font-body font-semibold text-[#2A2622]">
                         {selectedGuest.first_name} {selectedGuest.last_name}
                       </p>
-                      <p className="text-xs text-gray-500">{selectedGuest.email} • {selectedGuest.phone}</p>
+                      <p className="font-body text-xs text-[#065F46]">{selectedGuest.email} • {selectedGuest.phone}</p>
                     </div>
                   </div>
                   <button
                     onClick={clearSelectedGuest}
-                    className="p-1 hover:bg-green-100 rounded-full transition-colors"
+                    className="p-1 hover:bg-[#A7F3D0] rounded-full transition-colors"
                   >
-                    <XMarkIcon className="h-5 w-5 text-gray-500" />
+                    <XMarkIcon className="h-5 w-5 text-[#065F46]" />
                   </button>
                 </div>
               </div>
@@ -308,17 +302,17 @@ export default function NewBookingPage() {
             {activeTab === 'search' && !selectedGuest && (
               <div className="space-y-4">
                 <div className="relative">
-                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <MagnifyingGlassIcon className="absolute left-0 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#8A8377]" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search by name, email, or phone..."
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent pl-8 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]"
                   />
                   {isSearching && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-red-600 border-t-transparent"></div>
+                    <div className="absolute right-0 top-1/2 transform -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#C9A468] border-t-transparent"></div>
                     </div>
                   )}
                 </div>
@@ -330,17 +324,19 @@ export default function NewBookingPage() {
                       <button
                         key={guest.id}
                         onClick={() => selectGuest(guest)}
-                        className="w-full text-left p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 hover:border-red-300"
+                        className="w-full text-left p-4 bg-[#F7F1E4] hover:bg-[#DDD5C4] rounded-lg transition-colors border border-[#DDD5C4] hover:border-[#C9A468]"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                            <UserIcon className="h-5 w-5 text-red-600" />
+                          <div className="w-10 h-10 bg-[#16302B] rounded-full flex items-center justify-center">
+                            <span className="font-display text-sm font-medium text-[#F7F1E4]">
+                              {guest.first_name?.[0]}{guest.last_name?.[0]}
+                            </span>
                           </div>
                           <div className="flex-1">
-                            <p className="font-semibold text-dark-500">
+                            <p className="font-body font-semibold text-[#2A2622]">
                               {guest.first_name} {guest.last_name}
                             </p>
-                            <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
+                            <div className="flex items-center gap-3 text-xs text-[#8A8377] mt-1">
                               <span className="flex items-center gap-1">
                                 <EnvelopeIcon className="h-3 w-3" />
                                 {guest.email}
@@ -358,12 +354,12 @@ export default function NewBookingPage() {
                 )}
 
                 {searchQuery.length > 2 && searchResults.length === 0 && !isSearching && (
-                  <div className="text-center py-8 bg-gray-50 rounded-lg">
-                    <UserIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                    <p className="text-gray-600">No guests found</p>
+                  <div className="text-center py-8 bg-[#F7F1E4] rounded-lg border border-[#DDD5C4]">
+                    <UserIcon className="h-12 w-12 mx-auto text-[#DDD5C4] mb-3" />
+                    <p className="font-body text-[#8A8377]">No guests found</p>
                     <button
                       onClick={() => setActiveTab('new')}
-                      className="mt-2 text-red-600 hover:text-red-700 font-medium"
+                      className="mt-2 font-body text-[#16302B] hover:text-[#1D3B34] font-medium underline decoration-[#C9A468] underline-offset-4"
                     >
                       Create a new guest instead
                     </button>
@@ -376,83 +372,79 @@ export default function NewBookingPage() {
               <form onSubmit={handleCreateGuest} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      First Name <span className="text-red-500">*</span>
+                    <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
+                      First Name <span className="text-[#EF4444]">*</span>
                     </label>
                     <input
                       type="text"
                       name="guest_first_name"
                       value={guestData.first_name}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent ${
-                        errors.guest_first_name ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`font-body w-full border-0 border-b ${errors.guest_first_name ? 'border-[#EF4444]' : 'border-[#DDD5C4]'} bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]`}
+                      placeholder="John"
                     />
                     {errors.guest_first_name && (
-                      <p className="text-xs text-red-600 mt-1">{errors.guest_first_name}</p>
+                      <p className="font-body text-sm text-[#EF4444] mt-1">{errors.guest_first_name}</p>
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Last Name <span className="text-red-500">*</span>
+                    <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
+                      Last Name <span className="text-[#EF4444]">*</span>
                     </label>
                     <input
                       type="text"
                       name="guest_last_name"
                       value={guestData.last_name}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent ${
-                        errors.guest_last_name ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`font-body w-full border-0 border-b ${errors.guest_last_name ? 'border-[#EF4444]' : 'border-[#DDD5C4]'} bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]`}
+                      placeholder="Doe"
                     />
                     {errors.guest_last_name && (
-                      <p className="text-xs text-red-600 mt-1">{errors.guest_last_name}</p>
+                      <p className="font-body text-sm text-[#EF4444] mt-1">{errors.guest_last_name}</p>
                     )}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email <span className="text-red-500">*</span>
+                    <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
+                      Email <span className="text-[#EF4444]">*</span>
                     </label>
                     <input
                       type="email"
                       name="guest_email"
                       value={guestData.email}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent ${
-                        errors.guest_email ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`font-body w-full border-0 border-b ${errors.guest_email ? 'border-[#EF4444]' : 'border-[#DDD5C4]'} bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]`}
+                      placeholder="john@example.com"
                     />
                     {errors.guest_email && (
-                      <p className="text-xs text-red-600 mt-1">{errors.guest_email}</p>
+                      <p className="font-body text-sm text-[#EF4444] mt-1">{errors.guest_email}</p>
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Phone <span className="text-red-500">*</span>
+                    <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
+                      Phone <span className="text-[#EF4444]">*</span>
                     </label>
                     <input
                       type="tel"
                       name="guest_phone"
                       value={guestData.phone}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent ${
-                        errors.guest_phone ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`font-body w-full border-0 border-b ${errors.guest_phone ? 'border-[#EF4444]' : 'border-[#DDD5C4]'} bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]`}
+                      placeholder="+234 123 456 7890"
                     />
                     {errors.guest_phone && (
-                      <p className="text-xs text-red-600 mt-1">{errors.guest_phone}</p>
+                      <p className="font-body text-sm text-[#EF4444] mt-1">{errors.guest_phone}</p>
                     )}
                   </div>
                 </div>
 
-                <div className="flex justify-end pt-4">
+                <div className="flex justify-end pt-4 border-t border-[#DDD5C4]">
                   <button
                     type="submit"
                     disabled={createGuest.isPending}
-                    className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors font-medium"
+                    className="font-body px-6 py-2 text-sm font-medium text-[#F7F1E4] bg-[#16302B] border border-transparent rounded-lg hover:bg-[#1D3B34] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C9A468] focus:ring-offset-2 disabled:opacity-50"
                   >
                     {createGuest.isPending ? 'Creating...' : 'Create Guest'}
                   </button>
@@ -460,26 +452,24 @@ export default function NewBookingPage() {
               </form>
             )}
 
-            {/* Booking Details Form - Only show when guest is selected */}
+            {/* Booking Details Form */}
             {selectedGuest && (
-              <form onSubmit={handleSubmit} className="space-y-6 mt-6 pt-6 border-t border-gray-200">
-                <h2 className="text-lg font-semibold text-dark-500 flex items-center gap-2">
-                  <HomeIcon className="h-5 w-5 text-red-600" />
+              <form onSubmit={handleSubmit} className="space-y-6 mt-6 pt-6 border-t border-[#DDD5C4]">
+                <h2 className="font-display text-lg font-medium text-[#2A2622] flex items-center gap-2">
+                  <HomeIcon className="h-5 w-5 text-[#C9A468]" />
                   Booking Details
                 </h2>
 
                 {/* Room Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Select Room <span className="text-red-500">*</span>
+                  <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
+                    Select Room <span className="text-[#EF4444]">*</span>
                   </label>
                   <select
                     name="room_id"
                     value={formData.room_id}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent ${
-                      errors.room_id ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={`font-body w-full border-0 border-b ${errors.room_id ? 'border-[#EF4444]' : 'border-[#DDD5C4]'} bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px]`}
                     disabled={roomsLoading}
                   >
                     <option value="">Choose a room</option>
@@ -489,57 +479,53 @@ export default function NewBookingPage() {
                       </option>
                     ))}
                   </select>
-                  {errors.room_id && <p className="text-xs text-red-600 mt-1">{errors.room_id}</p>}
+                  {errors.room_id && <p className="font-body text-sm text-[#EF4444] mt-1">{errors.room_id}</p>}
                 </div>
 
                 {/* Dates */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Check-in Date <span className="text-red-500">*</span>
+                    <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
+                      Check-in Date <span className="text-[#EF4444]">*</span>
                     </label>
                     <div className="relative">
-                      <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <CalendarIcon className="absolute left-0 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#8A8377]" />
                       <input
                         type="date"
                         name="check_in"
                         value={formData.check_in}
                         onChange={handleChange}
                         min={new Date().toISOString().split('T')[0]}
-                        className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent ${
-                          errors.check_in ? 'border-red-500' : 'border-gray-300'
-                        }`}
+                        className={`font-body w-full border-0 border-b ${errors.check_in ? 'border-[#EF4444]' : 'border-[#DDD5C4]'} bg-transparent pl-8 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px]`}
                       />
                     </div>
-                    {errors.check_in && <p className="text-xs text-red-600 mt-1">{errors.check_in}</p>}
+                    {errors.check_in && <p className="font-body text-sm text-[#EF4444] mt-1">{errors.check_in}</p>}
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Check-out Date <span className="text-red-500">*</span>
+                    <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
+                      Check-out Date <span className="text-[#EF4444]">*</span>
                     </label>
                     <div className="relative">
-                      <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <CalendarIcon className="absolute left-0 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#8A8377]" />
                       <input
                         type="date"
                         name="check_out"
                         value={formData.check_out}
                         onChange={handleChange}
                         min={formData.check_in || new Date().toISOString().split('T')[0]}
-                        className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent ${
-                          errors.check_out ? 'border-red-500' : 'border-gray-300'
-                        }`}
+                        className={`font-body w-full border-0 border-b ${errors.check_out ? 'border-[#EF4444]' : 'border-[#DDD5C4]'} bg-transparent pl-8 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px]`}
                       />
                     </div>
-                    {errors.check_out && <p className="text-xs text-red-600 mt-1">{errors.check_out}</p>}
+                    {errors.check_out && <p className="font-body text-sm text-[#EF4444] mt-1">{errors.check_out}</p>}
                   </div>
                 </div>
 
                 {/* Guests Count */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Adults <span className="text-red-500">*</span>
+                    <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
+                      Adults <span className="text-[#EF4444]">*</span>
                     </label>
                     <input
                       type="number"
@@ -547,12 +533,12 @@ export default function NewBookingPage() {
                       min="1"
                       value={formData.adults}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px]"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
                       Children
                     </label>
                     <input
@@ -561,14 +547,14 @@ export default function NewBookingPage() {
                       min="0"
                       value={formData.children}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px]"
                     />
                   </div>
                 </div>
 
                 {/* Special Requests */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
                     Special Requests
                   </label>
                   <textarea
@@ -576,63 +562,63 @@ export default function NewBookingPage() {
                     value={formData.special_requests}
                     onChange={handleChange}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377] resize-none"
                     placeholder="Any special requests or requirements..."
                   />
                 </div>
 
                 {/* Summary Card */}
                 {selectedRoom && nights > 0 && (
-                  <div className="bg-gradient-to-r from-red-50 to-amber-50 rounded-lg p-6 border border-red-200">
-                    <h3 className="font-semibold text-dark-500 mb-4 flex items-center gap-2">
-                      <span className="w-1 h-6 bg-red-600 rounded-full"></span>
+                  <div className="bg-[#F7F1E4] rounded-lg p-6 border border-[#DDD5C4]">
+                    <h3 className="font-display text-base font-medium text-[#2A2622] mb-4 flex items-center gap-2">
+                      <span className="w-1 h-6 bg-[#C9A468] rounded-full"></span>
                       Booking Summary
                     </h3>
                     
                     <div className="space-y-3">
-                      <div className="flex justify-between items-center py-2 border-b border-red-100">
-                        <span className="text-gray-600">Room:</span>
-                        <span className="font-medium text-dark-500">
+                      <div className="flex justify-between items-center py-2 border-b border-[#DDD5C4]">
+                        <span className="font-body text-[#8A8377]">Room:</span>
+                        <span className="font-body font-medium text-[#2A2622]">
                           Room {selectedRoom.room_number} ({selectedRoom.room_type})
                         </span>
                       </div>
                       
-                      <div className="flex justify-between items-center py-2 border-b border-red-100">
-                        <span className="text-gray-600">Nights:</span>
-                        <span className="font-medium text-dark-500">{nights}</span>
+                      <div className="flex justify-between items-center py-2 border-b border-[#DDD5C4]">
+                        <span className="font-body text-[#8A8377]">Nights:</span>
+                        <span className="font-body font-medium text-[#2A2622]">{nights}</span>
                       </div>
                       
-                      <div className="flex justify-between items-center py-2 border-b border-red-100">
-                        <span className="text-gray-600">Price per night:</span>
-                        <span className="font-medium text-dark-500">₦{selectedRoom.base_price.toLocaleString()}</span>
+                      <div className="flex justify-between items-center py-2 border-b border-[#DDD5C4]">
+                        <span className="font-body text-[#8A8377]">Price per night:</span>
+                        <span className="font-body font-medium text-[#2A2622]">₦{selectedRoom.base_price.toLocaleString()}</span>
                       </div>
                       
                       <div className="flex justify-between items-center pt-2">
-                        <span className="text-lg font-semibold text-dark-500">Total:</span>
-                        <span className="text-2xl font-bold text-red-600">₦{totalAmount.toLocaleString()}</span>
+                        <span className="font-display text-lg font-medium text-[#2A2622]">Total:</span>
+                        <span className="font-display text-2xl font-medium text-[#16302B]">₦{totalAmount.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
                 )}
 
                 {/* Form Actions */}
-                <div className="flex justify-end gap-3 pt-4">
+                <div className="flex justify-end gap-3 pt-4 border-t border-[#DDD5C4]">
                   <Link
                     href="/bookings"
-                    className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+                    className="font-body px-6 py-2 text-sm font-medium text-[#16302B] bg-[#F7F1E4] border border-[#DDD5C4] rounded-lg hover:bg-[#DDD5C4] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C9A468] focus:ring-offset-2"
                   >
                     Cancel
                   </Link>
                   <button
                     type="submit"
                     disabled={createBooking.isPending}
-                    className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors font-medium"
+                    className="font-body px-6 py-2 text-sm font-medium text-[#F7F1E4] bg-[#16302B] border border-transparent rounded-lg hover:bg-[#1D3B34] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C9A468] focus:ring-offset-2 disabled:opacity-50 flex items-center gap-2"
                   >
                     {createBooking.isPending ? (
-                      <span className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <>
+                        <div className="w-4 h-4 border-2 border-[#F7F1E4] border-t-transparent rounded-full animate-spin" />
                         Creating...
-                      </span>
+                      </>
                     ) : 'Create Booking'}
                   </button>
                 </div>

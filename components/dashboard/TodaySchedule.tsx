@@ -9,16 +9,30 @@ import {
 } from '@heroicons/react/24/outline';
 import { useTodayBookings } from '@/lib/api/hooks/useBookings';
 
+const formatTime = (value: string) =>
+  new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
 export default function TodaySchedule() {
   const { data: todayData, isLoading } = useTodayBookings();
 
+  // Note: move this @import into globals.css alongside the login page's copy
+  // so Fraunces/Work Sans only load once app-wide, rather than per component.
+  const fontStyles = (
+    <style jsx global>{`
+      @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&display=swap');
+      .font-display { font-family: 'Fraunces', serif; font-optical-sizing: auto; }
+      .font-body { font-family: 'Work Sans', sans-serif; }
+    `}</style>
+  );
+
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <div className="rounded-lg border border-[#EDE6D6] bg-[#FAF6EF] p-5">
+        {fontStyles}
         <div className="animate-pulse space-y-3">
-          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-4 w-1/4 rounded bg-[#EDE6D6]" />
+          <div className="h-4 w-1/2 rounded bg-[#EDE6D6]" />
+          <div className="h-4 w-1/3 rounded bg-[#EDE6D6]" />
         </div>
       </div>
     );
@@ -28,85 +42,99 @@ export default function TodaySchedule() {
   const departures = todayData?.departures || [];
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-      <h2 className="text-lg font-semibold text-dark-500 mb-4 flex items-center gap-2">
-        <CalendarIcon className="h-5 w-5 text-red-600" />
-        Today's Schedule
-      </h2>
+    <div className="rounded-lg border border-[#EDE6D6] bg-[#FAF6EF] p-5">
+      {fontStyles}
 
-      <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <CalendarIcon className="h-5 w-5 text-[#B8905B]" />
+        <h2 className="font-display text-lg text-[#2A2622]">Today&rsquo;s schedule</h2>
+      </div>
+      <div className="mt-3 h-px w-full bg-[#EDE6D6]" />
+
+      <div className="mt-4 space-y-6">
         {/* Arrivals */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <ArrowRightIcon className="h-4 w-4 text-green-600" />
-            <h3 className="font-medium text-green-600">Arrivals ({arrivals.length})</h3>
+        <section>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <ArrowRightIcon className="h-3.5 w-3.5 text-[#B8905B]" />
+              <h3 className="font-body text-xs font-semibold uppercase tracking-[0.14em] text-[#B8905B]">
+                Arrivals
+              </h3>
+            </div>
+            <span className="font-body text-xs tabular-nums text-[#8A8377]">{arrivals.length}</span>
           </div>
+
           {arrivals.length === 0 ? (
-            <p className="text-sm text-gray-500 ml-6">No arrivals today</p>
+            <p className="font-body mt-2 text-sm italic text-[#8A8377]">Nothing arriving today</p>
           ) : (
-            <div className="space-y-2">
+            <ul className="mt-2 divide-y divide-[#EDE6D6]">
               {arrivals.map((booking: any) => (
-                <Link
-                  key={booking.id}
-                  href={`/bookings/${booking.id}`}
-                  className="block ml-6 p-2 bg-green-50 rounded-lg hover:bg-green-100"
-                >
-                  <div className="flex justify-between">
+                <li key={booking.id}>
+                  <Link
+                    href={`/bookings/${booking.id}`}
+                    className="flex items-center justify-between py-2.5 transition-colors hover:bg-[#F3EEE1]"
+                  >
                     <div>
-                      <p className="font-medium text-dark-500">
+                      <p className="font-body text-sm font-medium text-[#2A2622]">
                         {booking.guest_name || 'Guest'}
                       </p>
-                      <p className="text-xs text-gray-600">Room {booking.room_number}</p>
+                      <p className="font-body text-xs text-[#8A8377]">Room {booking.room_number}</p>
                     </div>
-                    <span className="text-xs text-green-600">
-                      {new Date(booking.check_in).toLocaleTimeString()}
+                    <span className="font-body text-xs tabular-nums text-[#B8905B]">
+                      {formatTime(booking.check_in)}
                     </span>
-                  </div>
-                </Link>
+                  </Link>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
-        </div>
+        </section>
 
         {/* Departures */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <ArrowLeftIcon className="h-4 w-4 text-red-600" />
-            <h3 className="font-medium text-red-600">Departures ({departures.length})</h3>
+        <section>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <ArrowLeftIcon className="h-3.5 w-3.5 text-[#16302B]" />
+              <h3 className="font-body text-xs font-semibold uppercase tracking-[0.14em] text-[#16302B]">
+                Departures
+              </h3>
+            </div>
+            <span className="font-body text-xs tabular-nums text-[#8A8377]">{departures.length}</span>
           </div>
+
           {departures.length === 0 ? (
-            <p className="text-sm text-gray-500 ml-6">No departures today</p>
+            <p className="font-body mt-2 text-sm italic text-[#8A8377]">Nothing departing today</p>
           ) : (
-            <div className="space-y-2">
+            <ul className="mt-2 divide-y divide-[#EDE6D6]">
               {departures.map((booking: any) => (
-                <Link
-                  key={booking.id}
-                  href={`/bookings/${booking.id}`}
-                  className="block ml-6 p-2 bg-red-50 rounded-lg hover:bg-red-100"
-                >
-                  <div className="flex justify-between">
+                <li key={booking.id}>
+                  <Link
+                    href={`/bookings/${booking.id}`}
+                    className="flex items-center justify-between py-2.5 transition-colors hover:bg-[#F3EEE1]"
+                  >
                     <div>
-                      <p className="font-medium text-dark-500">
+                      <p className="font-body text-sm font-medium text-[#2A2622]">
                         {booking.guest_name || 'Guest'}
                       </p>
-                      <p className="text-xs text-gray-600">Room {booking.room_number}</p>
+                      <p className="font-body text-xs text-[#8A8377]">Room {booking.room_number}</p>
                     </div>
-                    <span className="text-xs text-red-600">
-                      {new Date(booking.check_out).toLocaleTimeString()}
+                    <span className="font-body text-xs tabular-nums text-[#16302B]">
+                      {formatTime(booking.check_out)}
                     </span>
-                  </div>
-                </Link>
+                  </Link>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
-        </div>
+        </section>
       </div>
 
       <Link
         href="/bookings"
-        className="block text-center mt-4 text-sm text-red-600 hover:text-red-700 font-medium"
+        className="font-body group mt-5 flex items-center justify-center gap-1.5 border-t border-[#EDE6D6] pt-4 text-sm font-medium text-[#B8905B] hover:text-[#9C7844]"
       >
-        View All Bookings
+        View all bookings
+        <ArrowRightIcon className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
       </Link>
     </div>
   );

@@ -1,7 +1,7 @@
 // frontend/app/pos/components/Cart.tsx
 'use client';
 
-import { XMarkIcon, TrashIcon, PlusIcon, MinusIcon, UserIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, TrashIcon, PlusIcon, MinusIcon, UserIcon, ShoppingBagIcon } from '@heroicons/react/24/outline';
 
 interface CartProps {
   cart: any[];
@@ -30,32 +30,34 @@ export default function Cart({
   tax,
   total
 }: CartProps) {
-  // Format price helper
   const formatPrice = (price: number) => {
     return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-[#2A2622]/80 backdrop-blur-sm z-50" onClick={onClose}>
       <div
         className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center justify-between p-4 border-b border-[#DDD5C4] bg-[#F7F1E4]">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Current Order</h2>
-            <p className="text-sm text-gray-500">{cart.length} items</p>
+            <h2 className="font-display text-lg font-medium text-[#2A2622]">Current Order</h2>
+            <p className="font-body text-sm text-[#8A8377]">{cart.length} items</p>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
+          <button 
+            onClick={onClose} 
+            className="p-1.5 text-[#8A8377] hover:text-[#2A2622] hover:bg-white/50 rounded-lg transition-colors"
+          >
             <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
 
-        {/* Guest Name - Simple input */}
-        <div className="p-4 border-b bg-gray-50">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            <UserIcon className="h-4 w-4 inline mr-1" />
+        {/* Guest Name */}
+        <div className="p-4 border-b border-[#DDD5C4] bg-[#FAF6EF]">
+          <label className="font-body block text-sm font-medium text-[#5B564B] mb-1.5">
+            <UserIcon className="h-4 w-4 inline mr-1.5 text-[#8A8377]" />
             Guest Name (optional)
           </label>
           <input
@@ -63,27 +65,29 @@ export default function Cart({
             value={guestName}
             onChange={(e) => onGuestNameChange(e.target.value)}
             placeholder="e.g., John Doe"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+            className="font-body w-full border-0 border-b border-[#DDD5C4] bg-transparent px-0 py-2 text-[#2A2622] outline-none transition-colors focus:border-b-2 focus:border-[#C9A468] focus:pb-[7px] placeholder:text-[#8A8377]"
           />
         </div>
 
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#FAF6EF]">
           {cart.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <p>Cart is empty</p>
+            <div className="text-center py-12">
+              <ShoppingBagIcon className="h-12 w-12 mx-auto text-[#DDD5C4] mb-3" />
+              <p className="font-body text-[#8A8377]">Cart is empty</p>
+              <p className="font-body text-sm text-[#8A8377] mt-1">Add items from the product grid</p>
             </div>
           ) : (
             cart.map((item) => (
-              <div key={item.id} className="bg-gray-50 rounded-lg p-3">
-                <div className="flex justify-between items-start mb-2">
+              <div key={item.id} className="bg-white rounded-lg border border-[#DDD5C4] p-4 hover:border-[#C9A468] transition-all">
+                <div className="flex justify-between items-start mb-3">
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900">{item.name}</p>
-                    <p className="text-xs text-gray-500">₦{formatPrice(item.price)} each</p>
+                    <p className="font-body font-medium text-[#2A2622]">{item.name}</p>
+                    <p className="font-body text-xs text-[#8A8377]">₦{formatPrice(item.price)} each</p>
                   </div>
                   <button
                     onClick={() => onRemoveItem(item.id)}
-                    className="text-gray-400 hover:text-red-600 p-1"
+                    className="text-[#8A8377] hover:text-[#EF4444] p-1 rounded-lg hover:bg-[#FEF2F2] transition-colors"
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
@@ -93,19 +97,19 @@ export default function Cart({
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                      className="w-8 h-8 rounded-lg bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+                      className="w-8 h-8 rounded-lg border border-[#DDD5C4] hover:border-[#C9A468] hover:bg-[#F7F1E4] flex items-center justify-center transition-colors"
                     >
-                      <MinusIcon className="h-4 w-4" />
+                      <MinusIcon className="h-4 w-4 text-[#8A8377]" />
                     </button>
-                    <span className="w-8 text-center font-medium">{item.quantity}</span>
+                    <span className="font-body w-8 text-center font-medium text-[#2A2622]">{item.quantity}</span>
                     <button
                       onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                      className="w-8 h-8 rounded-lg bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+                      className="w-8 h-8 rounded-lg border border-[#DDD5C4] hover:border-[#C9A468] hover:bg-[#F7F1E4] flex items-center justify-center transition-colors"
                     >
-                      <PlusIcon className="h-4 w-4" />
+                      <PlusIcon className="h-4 w-4 text-[#8A8377]" />
                     </button>
                   </div>
-                  <p className="font-semibold text-red-600">₦{formatPrice(item.subtotal)}</p>
+                  <p className="font-display font-medium text-[#16302B]">₦{formatPrice(item.subtotal)}</p>
                 </div>
               </div>
             ))
@@ -114,32 +118,32 @@ export default function Cart({
 
         {/* Cart Summary */}
         {cart.length > 0 && (
-          <div className="border-t p-4 bg-white">
+          <div className="border-t border-[#DDD5C4] p-4 bg-white shadow-lg">
             <div className="space-y-2 mb-4">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Subtotal:</span>
-                <span className="font-medium">₦{formatPrice(subtotal)}</span>
+                <span className="font-body text-[#8A8377]">Subtotal:</span>
+                <span className="font-body font-medium text-[#2A2622]">₦{formatPrice(subtotal)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">VAT (7.5%):</span>
-                <span className="font-medium">₦{formatPrice(tax)}</span>
+                <span className="font-body text-[#8A8377]">VAT (7.5%):</span>
+                <span className="font-body font-medium text-[#2A2622]">₦{formatPrice(tax)}</span>
               </div>
-              <div className="flex justify-between text-lg font-bold pt-2 border-t">
-                <span>Total:</span>
-                <span className="text-red-600">₦{formatPrice(total)}</span>
+              <div className="flex justify-between font-display text-lg font-medium pt-2 border-t border-[#DDD5C4]">
+                <span className="text-[#2A2622]">Total:</span>
+                <span className="text-[#16302B]">₦{formatPrice(total)}</span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={onClearCart}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                className="font-body px-4 py-2.5 text-sm font-medium text-[#16302B] bg-[#F7F1E4] border border-[#DDD5C4] rounded-lg hover:bg-[#DDD5C4] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C9A468] focus:ring-offset-2"
               >
-                Clear
+                Clear Cart
               </button>
               <button
                 onClick={onCheckout}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                className="font-body px-4 py-2.5 text-sm font-medium text-[#F7F1E4] bg-[#16302B] border border-transparent rounded-lg hover:bg-[#1D3B34] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C9A468] focus:ring-offset-2"
               >
                 Checkout
               </button>
