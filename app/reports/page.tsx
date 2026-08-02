@@ -34,6 +34,7 @@ import { useSales } from '@/lib/api/hooks/useSales';
 import { useBookings } from '@/lib/api/hooks/useBookings';
 import { useExpenses, useExpenseSummary } from '@/lib/api/hooks/useExpenses';
 import { useStaff } from '@/lib/api/hooks/useStaff';
+import { useOrders } from '@/lib/api/hooks/useMenu';
 import { format, subDays, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 import DateRangePicker from './components/DateRangePicker';
 
@@ -80,11 +81,13 @@ export default function ReportsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  // Fetch all data
   const { data: sales } = useSales({});
   const { data: bookings } = useBookings({});
   const { data: expenses } = useExpenses({});
   const { data: expenseSummary } = useExpenseSummary();
   const { data: staff } = useStaff();
+  const { data: orders } = useOrders({});
 
   const VAT_RATE = 0.075;
 
@@ -109,17 +112,19 @@ export default function ReportsPage() {
     return isWithinInterval(itemDate, { start: dateRange.start, end: dateRange.end });
   };
 
-  const filteredSales = sales?.filter((s) => s && filterByDateRange(s.created_at)) || [];
-  const filteredBookings = bookings?.filter((b) => b && filterByDateRange(b.created_at)) || [];
-  const filteredExpenses = expenses?.filter((e) => e && filterByDateRange(e.expense_date)) || [];
+  const filteredSales = sales?.filter((s: any) => s && filterByDateRange(s.created_at)) || [];
+  const filteredBookings = bookings?.filter((b: any) => b && filterByDateRange(b.created_at)) || [];
+  const filteredExpenses = expenses?.filter((e: any) => e && filterByDateRange(e.expense_date)) || [];
+  const filteredOrders = orders?.filter((o: any) => o && filterByDateRange(o.placed_at)) || [];
 
   const allTransactions = useMemo(() => {
-    const salesTrans = filteredSales.map((s) => ({ ...s, type: 'sale' }));
-    const bookingsTrans = filteredBookings.map((b) => ({ ...b, type: 'booking' }));
-    return [...salesTrans, ...bookingsTrans].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    const salesTrans = filteredSales.map((s: any) => ({ ...s, type: 'sale' }));
+    const bookingsTrans = filteredBookings.map((b: any) => ({ ...b, type: 'booking' }));
+    const ordersTrans = filteredOrders.map((o: any) => ({ ...o, type: 'order' }));
+    return [...salesTrans, ...bookingsTrans, ...ordersTrans].sort(
+      (a, b) => new Date(b.created_at || b.placed_at).getTime() - new Date(a.created_at || a.placed_at).getTime()
     );
-  }, [filteredSales, filteredBookings]);
+  }, [filteredSales, filteredBookings, filteredOrders]);
 
   const totalPages = Math.ceil(allTransactions.length / itemsPerPage);
   const paginatedTransactions = allTransactions.slice(
@@ -130,53 +135,62 @@ export default function ReportsPage() {
   const totals = useMemo(() => {
     let totalSales = 0;
     let totalBookings = 0;
+    let totalOrders = 0;
     let totalExpenses = 0;
     let salesCount = 0;
     let bookingsCount = 0;
+    let ordersCount = 0;
 
-    filteredSales.forEach((sale) => {
+    filteredSales.forEach((sale: any) => {
       totalSales += calculateAmount(sale?.total_amount);
       salesCount++;
     });
 
-    filteredBookings.forEach((booking) => {
+    filteredBookings.forEach((booking: any) => {
       totalBookings += calculateAmount(booking?.total_amount);
       bookingsCount++;
     });
 
-    filteredExpenses.forEach((expense) => {
+    filteredOrders.forEach((order: any) => {
+      totalOrders += calculateAmount(order?.total_amount);
+      ordersCount++;
+    });
+
+    filteredExpenses.forEach((expense: any) => {
       totalExpenses += safeNumber(expense?.amount);
     });
 
-    const grossRevenue = totalSales + totalBookings;
+    const grossRevenue = totalSales + totalBookings + totalOrders;
     const netProfit = grossRevenue - totalExpenses;
     const dayCount = Math.max(1, Math.ceil((dateRange.end.getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24)));
 
     return {
       totalSales,
       totalBookings,
+      totalOrders,
       totalExpenses,
       grossRevenue,
       netProfit,
       salesCount,
       bookingsCount,
+      ordersCount,
       expensesCount: filteredExpenses.length,
       profitMargin: grossRevenue > 0 ? (netProfit / grossRevenue) * 100 : 0,
       averageDailyRevenue: grossRevenue / dayCount,
     };
-  }, [filteredSales, filteredBookings, filteredExpenses, excludeVAT, dateRange]);
+  }, [filteredSales, filteredBookings, filteredOrders, filteredExpenses, excludeVAT, dateRange]);
 
   const dailyData = useMemo(() => {
-    const days: Record<string, { sales: number; bookings: number; expenses: number; date: string }> = {};
+    const days: Record<string, { sales: number; bookings: number; orders: number; expenses: number; date: string }> = {};
     let currentDate = new Date(dateRange.start);
 
     while (currentDate <= dateRange.end) {
       const dateKey = format(currentDate, 'yyyy-MM-dd');
-      days[dateKey] = { sales: 0, bookings: 0, expenses: 0, date: format(currentDate, 'MMM dd') };
+      days[dateKey] = { sales: 0, bookings: 0, orders: 0, expenses: 0, date: format(currentDate, 'MMM dd') };
       currentDate = new Date(currentDate.setDate(currentDate.getDate() + 1));
     }
 
-    filteredSales.forEach((sale) => {
+    filteredSales.forEach((sale: any) => {
       if (sale?.created_at) {
         const dateKey = format(new Date(sale.created_at), 'yyyy-MM-dd');
         if (days[dateKey]) {
@@ -185,7 +199,7 @@ export default function ReportsPage() {
       }
     });
 
-    filteredBookings.forEach((booking) => {
+    filteredBookings.forEach((booking: any) => {
       if (booking?.created_at) {
         const dateKey = format(new Date(booking.created_at), 'yyyy-MM-dd');
         if (days[dateKey]) {
@@ -194,7 +208,16 @@ export default function ReportsPage() {
       }
     });
 
-    filteredExpenses.forEach((expense) => {
+    filteredOrders.forEach((order: any) => {
+      if (order?.placed_at) {
+        const dateKey = format(new Date(order.placed_at), 'yyyy-MM-dd');
+        if (days[dateKey]) {
+          days[dateKey].orders += calculateAmount(order.total_amount);
+        }
+      }
+    });
+
+    filteredExpenses.forEach((expense: any) => {
       if (expense?.expense_date) {
         const dateKey = format(new Date(expense.expense_date), 'yyyy-MM-dd');
         if (days[dateKey]) {
@@ -205,22 +228,23 @@ export default function ReportsPage() {
 
     return Object.values(days).map((day) => ({
       ...day,
-      revenue: day.sales + day.bookings,
-      profit: day.sales + day.bookings - day.expenses,
+      revenue: day.sales + day.bookings + day.orders,
+      profit: day.sales + day.bookings + day.orders - day.expenses,
     }));
-  }, [filteredSales, filteredBookings, filteredExpenses, excludeVAT, dateRange]);
+  }, [filteredSales, filteredBookings, filteredOrders, filteredExpenses, excludeVAT, dateRange]);
 
   const staffPerformance = useMemo(() => {
-    const performance: Record<string, { sales: number; bookings: number; name: string; role: string }> = {};
+    const performance: Record<string, { sales: number; bookings: number; orders: number; name: string; role: string }> = {};
 
-    filteredSales.forEach((sale) => {
-      const staffId = sale?.staff;
+    filteredSales.forEach((sale: any) => {
+      const staffId = sale?.staff || sale?.created_by;
       if (staffId) {
         if (!performance[staffId]) {
-          const staffMember = staff?.find((s) => s?.id === staffId);
+          const staffMember = staff?.find((s: any) => s?.id === staffId);
           performance[staffId] = {
             sales: 0,
             bookings: 0,
+            orders: 0,
             name: staffMember?.full_name || staffMember?.username || 'Unknown',
             role: staffMember?.role || 'Unknown',
           };
@@ -229,14 +253,15 @@ export default function ReportsPage() {
       }
     });
 
-    filteredBookings.forEach((booking) => {
+    filteredBookings.forEach((booking: any) => {
       const staffId = booking?.created_by;
       if (staffId) {
         if (!performance[staffId]) {
-          const staffMember = staff?.find((s) => s?.id === staffId);
+          const staffMember = staff?.find((s: any) => s?.id === staffId);
           performance[staffId] = {
             sales: 0,
             bookings: 0,
+            orders: 0,
             name: staffMember?.full_name || staffMember?.username || 'Unknown',
             role: staffMember?.role || 'Unknown',
           };
@@ -245,18 +270,35 @@ export default function ReportsPage() {
       }
     });
 
+    filteredOrders.forEach((order: any) => {
+      const staffId = order?.created_by;
+      if (staffId) {
+        if (!performance[staffId]) {
+          const staffMember = staff?.find((s: any) => s?.id === staffId);
+          performance[staffId] = {
+            sales: 0,
+            bookings: 0,
+            orders: 0,
+            name: staffMember?.full_name || staffMember?.username || 'Unknown',
+            role: staffMember?.role || 'Unknown',
+          };
+        }
+        performance[staffId].orders += calculateAmount(order?.total_amount);
+      }
+    });
+
     return Object.entries(performance)
       .map(([id, data]) => ({
         id,
         ...data,
-        total: data.sales + data.bookings,
+        total: data.sales + data.bookings + data.orders,
       }))
       .sort((a, b) => b.total - a.total);
-  }, [filteredSales, filteredBookings, staff, excludeVAT]);
+  }, [filteredSales, filteredBookings, filteredOrders, staff, excludeVAT]);
 
   const salesByMethod = useMemo(() => {
     const methods: Record<string, number> = {};
-    filteredSales.forEach((sale) => {
+    filteredSales.forEach((sale: any) => {
       const method = sale?.payment_method || 'cash';
       methods[method] = (methods[method] || 0) + calculateAmount(sale?.total_amount);
     });
@@ -266,20 +308,33 @@ export default function ReportsPage() {
   const expensesByCategory = expenseSummary?.by_category || [];
 
   const topProducts = useMemo(() => {
-    const products: Record<string, { name: string; revenue: number; quantity: number }> = {};
+    const products: Record<string, { name: string; revenue: number; quantity: number; source: string }> = {};
 
-    filteredSales.forEach((sale) => {
+    // POS Sales Products
+    filteredSales.forEach((sale: any) => {
       if (sale?.items && Array.isArray(sale.items)) {
         sale.items.forEach((item: any) => {
-          const productName = item?.product_name || item?.product?.name;
-          if (productName) {
-            if (!products[productName]) {
-              products[productName] = { name: productName, revenue: 0, quantity: 0 };
-            }
-            const itemTotal = item?.subtotal || (item?.quantity * item?.unit_price);
-            products[productName].revenue += calculateAmount(itemTotal);
-            products[productName].quantity += safeNumber(item?.quantity);
+          const productName = item?.product_name || item?.product?.name || 'Unknown';
+          if (!products[productName]) {
+            products[productName] = { name: productName, revenue: 0, quantity: 0, source: 'POS' };
           }
+          const itemTotal = item?.subtotal || (item?.quantity * item?.unit_price);
+          products[productName].revenue += calculateAmount(itemTotal);
+          products[productName].quantity += safeNumber(item?.quantity);
+        });
+      }
+    });
+
+    // Menu Orders Products
+    filteredOrders.forEach((order: any) => {
+      if (order?.order_items && Array.isArray(order.order_items)) {
+        order.order_items.forEach((item: any) => {
+          const productName = item?.item_name || 'Unknown';
+          if (!products[productName]) {
+            products[productName] = { name: productName, revenue: 0, quantity: 0, source: 'Menu' };
+          }
+          products[productName].revenue += calculateAmount(item?.subtotal || 0);
+          products[productName].quantity += safeNumber(item?.quantity);
         });
       }
     });
@@ -287,7 +342,7 @@ export default function ReportsPage() {
     return Object.values(products)
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10);
-  }, [filteredSales, excludeVAT]);
+  }, [filteredSales, filteredOrders, excludeVAT]);
 
   const chartData = dailyData.map((day) => ({
     name: day.date,
@@ -296,6 +351,7 @@ export default function ReportsPage() {
     expenses: day.expenses,
     sales: day.sales,
     bookings: day.bookings,
+    orders: day.orders,
   }));
 
   const handleExport = async () => {
@@ -303,15 +359,19 @@ export default function ReportsPage() {
     try {
       let csvContent = 'Date,Type,Reference,Amount (₦),Category,Payment Method,Status,Staff\n';
 
-      filteredSales.forEach((sale) => {
+      filteredSales.forEach((sale: any) => {
         csvContent += `${sale?.created_at || ''},Sale,${sale?.transaction_number || ''},${calculateAmount(sale?.total_amount).toFixed(2)},N/A,${sale?.payment_method || ''},Completed,${sale?.staff_name || 'N/A'}\n`;
       });
 
-      filteredBookings.forEach((booking) => {
+      filteredBookings.forEach((booking: any) => {
         csvContent += `${booking?.created_at || ''},Booking,${booking?.booking_reference || ''},${calculateAmount(booking?.total_amount).toFixed(2)},Room ${booking?.room?.room_number || 'N/A'},${booking?.payment_method || 'N/A'},${booking?.status || ''},${booking?.created_by_name || 'N/A'}\n`;
       });
 
-      filteredExpenses.forEach((expense) => {
+      filteredOrders.forEach((order: any) => {
+        csvContent += `${order?.placed_at || ''},Menu Order,${order?.order_number || ''},${calculateAmount(order?.total_amount).toFixed(2)},Menu Items,${order?.payment_method || 'N/A'},${order?.status || ''},${order?.created_by_name || 'N/A'}\n`;
+      });
+
+      filteredExpenses.forEach((expense: any) => {
         csvContent += `${expense?.expense_date || ''},Expense,${expense?.expense_number || ''},${safeNumber(expense?.amount).toFixed(2)},${expense?.category_name || expense?.category || 'N/A'},${expense?.payment_method || ''},-,\n`;
       });
 
@@ -396,7 +456,7 @@ export default function ReportsPage() {
               </div>
             </div>
             <p className="font-display text-sm sm:text-2xl font-medium text-[#2A2622]">₦{Math.round(totals.grossRevenue || 0).toLocaleString()}</p>
-            <p className="font-body text-[8px] sm:text-xs text-[#8A8377] mt-0.5">{totals.salesCount + totals.bookingsCount} transactions</p>
+            <p className="font-body text-[8px] sm:text-xs text-[#8A8377] mt-0.5">{totals.salesCount + totals.bookingsCount + totals.ordersCount} transactions</p>
           </div>
 
           <div className="bg-white rounded-lg border border-[#DDD5C4] p-3 sm:p-4 hover:border-[#C9A468] transition-all">
@@ -432,6 +492,28 @@ export default function ReportsPage() {
             </div>
             <p className="font-display text-sm sm:text-2xl font-medium text-[#F59E0B]">₦{Math.round(totals.totalExpenses || 0).toLocaleString()}</p>
             <p className="font-body text-[8px] sm:text-xs text-[#8A8377] mt-0.5">{totals.expensesCount} expenses</p>
+          </div>
+        </div>
+
+        {/* Revenue Breakdown by Source */}
+        <div className="bg-white rounded-lg border border-[#DDD5C4] p-4 sm:p-6">
+          <h2 className="font-display text-base sm:text-lg font-medium text-[#2A2622] mb-4">Revenue Breakdown by Source</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-[#F7F1E4] rounded-lg p-4 text-center">
+              <p className="font-body text-sm text-[#8A8377]">POS Sales</p>
+              <p className="font-display text-2xl font-medium text-[#16302B]">₦{Math.round(totals.totalSales || 0).toLocaleString()}</p>
+              <p className="font-body text-xs text-[#8A8377]">{totals.salesCount} transactions</p>
+            </div>
+            <div className="bg-[#F7F1E4] rounded-lg p-4 text-center">
+              <p className="font-body text-sm text-[#8A8377]">Menu Orders</p>
+              <p className="font-display text-2xl font-medium text-[#C9A468]">₦{Math.round(totals.totalOrders || 0).toLocaleString()}</p>
+              <p className="font-body text-xs text-[#8A8377]">{totals.ordersCount} orders</p>
+            </div>
+            <div className="bg-[#F7F1E4] rounded-lg p-4 text-center">
+              <p className="font-body text-sm text-[#8A8377]">Room Bookings</p>
+              <p className="font-display text-2xl font-medium text-[#3B82F6]">₦{Math.round(totals.totalBookings || 0).toLocaleString()}</p>
+              <p className="font-body text-xs text-[#8A8377]">{totals.bookingsCount} bookings</p>
+            </div>
           </div>
         </div>
 
@@ -482,11 +564,11 @@ export default function ReportsPage() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#F7F1E4" />
-                <XAxis dataKey="name" tick={{ fontSize: 12, fontFamily: "'Work Sans', sans-serif" }} interval={Math.floor(chartData.length / 10)} />
-                <YAxis tick={{ fontSize: 12, fontFamily: "'Work Sans', sans-serif" }} tickFormatter={(value) => `₦${(value / 1000).toFixed(0)}k`} />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} interval={Math.floor(chartData.length / 10)} />
+                <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `₦${(value / 1000).toFixed(0)}k`} />
                 <Tooltip
                   formatter={(value: number) => [`₦${Math.round(value || 0).toLocaleString()}`, '']}
-                  contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #DDD5C4', fontFamily: "'Work Sans', sans-serif" }}
+                  contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #DDD5C4' }}
                 />
                 <Area
                   type="monotone"
@@ -509,15 +591,16 @@ export default function ReportsPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData.slice(-12)}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#F7F1E4" />
-                  <XAxis dataKey="name" tick={{ fontSize: 12, fontFamily: "'Work Sans', sans-serif" }} />
-                  <YAxis tick={{ fontSize: 12, fontFamily: "'Work Sans', sans-serif" }} tickFormatter={(value) => `₦${(value / 1000).toFixed(0)}k`} />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `₦${(value / 1000).toFixed(0)}k`} />
                   <Tooltip 
                     formatter={(value: number) => [`₦${Math.round(value || 0).toLocaleString()}`, '']}
-                    contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #DDD5C4', fontFamily: "'Work Sans', sans-serif" }}
+                    contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #DDD5C4' }}
                   />
                   <Legend />
-                  <Bar dataKey="sales" name="Sales" fill={COLORS.primary} />
-                  <Bar dataKey="bookings" name="Bookings" fill={COLORS.gold} />
+                  <Bar dataKey="sales" name="POS Sales" fill={COLORS.primary} />
+                  <Bar dataKey="orders" name="Menu Orders" fill={COLORS.gold} />
+                  <Bar dataKey="bookings" name="Bookings" fill={COLORS.info} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -544,7 +627,7 @@ export default function ReportsPage() {
                   </Pie>
                   <Tooltip 
                     formatter={(value: number) => [`₦${Math.round(value || 0).toLocaleString()}`, '']}
-                    contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #DDD5C4', fontFamily: "'Work Sans', sans-serif" }}
+                    contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #DDD5C4' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -609,7 +692,7 @@ export default function ReportsPage() {
                     </Pie>
                     <Tooltip 
                       formatter={(value: number) => [`₦${Math.round(value || 0).toLocaleString()}`, '']}
-                      contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #DDD5C4', fontFamily: "'Work Sans', sans-serif" }}
+                      contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #DDD5C4' }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -710,26 +793,40 @@ export default function ReportsPage() {
               <tbody className="divide-y divide-[#F7F1E4]">
                 {paginatedTransactions.slice(0, 5).map((item: any, idx) => {
                   const isSale = item.type === 'sale';
+                  const isOrder = item.type === 'order';
                   const amount = calculateAmount(item?.total_amount);
-                  const guestName = isSale ? item?.guest_name : `${item?.guest?.first_name || ''} ${item?.guest?.last_name || ''}`.trim();
+                  const guestName = isSale ? item?.guest_name : 
+                                   isOrder ? item?.customer_name : 
+                                   `${item?.guest?.first_name || ''} ${item?.guest?.last_name || ''}`.trim();
+                  const date = item?.created_at || item?.placed_at;
+                  const ref = isSale ? item?.transaction_number : 
+                             isOrder ? item?.order_number : 
+                             item?.booking_reference;
+                  const staffName = isSale ? item?.staff_name : 
+                                   isOrder ? item?.created_by_name : 
+                                   item?.created_by_name;
                   return (
                     <tr key={idx} className="hover:bg-[#F7F1E4] transition-colors">
                       <td className="px-2 sm:px-6 py-2 sm:py-4 font-body text-[10px] sm:text-sm text-[#8A8377] whitespace-nowrap">
-                        {item?.created_at ? format(new Date(item.created_at), 'dd/MM/yy') : '-'}
+                        {date ? format(new Date(date), 'dd/MM/yy') : '-'}
                       </td>
                       <td className="px-2 sm:px-6 py-2 sm:py-4">
-                        <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 font-body text-[8px] sm:text-xs font-medium rounded-full ${isSale ? 'bg-[#D1FAE5] text-[#065F46]' : 'bg-[#DBEAFE] text-[#1E40AF]'}`}>
-                          {isSale ? 'Sale' : 'Book'}
+                        <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 font-body text-[8px] sm:text-xs font-medium rounded-full ${
+                          isSale ? 'bg-[#D1FAE5] text-[#065F46]' : 
+                          isOrder ? 'bg-[#FEF3C7] text-[#92400E]' : 
+                          'bg-[#DBEAFE] text-[#1E40AF]'
+                        }`}>
+                          {isSale ? 'Sale' : isOrder ? 'Order' : 'Book'}
                         </span>
                       </td>
                       <td className="px-2 sm:px-6 py-2 sm:py-4 font-body text-[10px] sm:text-sm font-mono text-[#8A8377] truncate max-w-[60px] sm:max-w-none">
-                        {isSale ? item?.transaction_number?.slice(0, 8) : item?.booking_reference?.slice(0, 8)}
+                        {ref?.slice(0, 8) || '-'}
                       </td>
                       <td className="px-2 sm:px-6 py-2 sm:py-4 font-body text-[10px] sm:text-sm font-semibold text-[#16302B] whitespace-nowrap">
                         ₦{Math.round(amount || 0).toLocaleString()}
                       </td>
                       <td className="px-2 sm:px-6 py-2 sm:py-4 font-body text-[10px] sm:text-sm text-[#8A8377] hidden md:table-cell truncate max-w-[60px]">
-                        {isSale ? item?.staff_name?.split(' ')[0] : item?.created_by_name?.split(' ')[0] || 'N/A'}
+                        {staffName?.split(' ')[0] || 'N/A'}
                       </td>
                       <td className="px-2 sm:px-6 py-2 sm:py-4 font-body text-[10px] sm:text-sm text-[#8A8377] hidden lg:table-cell truncate max-w-[80px]">
                         {guestName ? guestName.split(' ')[0] : 'Walk-in'}

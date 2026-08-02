@@ -13,6 +13,10 @@ import {
   CurrencyDollarIcon,
   XMarkIcon,
   PresentationChartBarIcon,
+  QueueListIcon,
+  Squares2X2Icon,
+  DocumentTextIcon,
+  TableCellsIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -23,6 +27,12 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon, roles: ['CEO', 'MANAGER', 'ADMIN', 'RECEPTIONIST', 'BAR_STAFF'] },
   { name: 'Rooms', href: '/rooms', icon: BuildingOfficeIcon, roles: ['CEO', 'MANAGER', 'ADMIN', 'RECEPTIONIST', 'HOUSEKEEPING'] },
   { name: 'Bookings', href: '/bookings', icon: ClipboardDocumentListIcon, roles: ['CEO', 'MANAGER', 'ADMIN', 'RECEPTIONIST'] },
+  // Tables Management - accessible to CEO and MANAGER only
+  { name: 'Tables', href: '/tables', icon: TableCellsIcon, roles: ['CEO', 'MANAGER', 'ADMIN'] },
+  // Menu Management - accessible to CEO, MANAGER, and BAR_STAFF
+  { name: 'Menu', href: '/menu', icon: Squares2X2Icon, roles: ['CEO', 'MANAGER', 'BAR_STAFF'] },
+  // Menu Orders - for lounge staff to manage orders
+  { name: 'Orders', href: '/menu/orders', icon: QueueListIcon, roles: ['CEO', 'MANAGER', 'BAR_STAFF'] },
   { name: 'Inventory', href: '/inventory', icon: ShoppingBagIcon, roles: ['CEO', 'MANAGER', 'ADMIN', 'BAR_STAFF'] },
   { name: 'POS', href: '/sales', icon: ChartBarIcon, roles: ['CEO', 'MANAGER', 'ADMIN', 'BAR_STAFF'] },
   { name: 'Staff', href: '/staff', icon: UserGroupIcon, roles: ['CEO', 'MANAGER', 'ADMIN'] },
@@ -113,6 +123,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase();
   };
 
+  // Get role display name
+  const getRoleDisplay = (role: string) => {
+    const roleMap: Record<string, string> = {
+      CEO: 'CEO',
+      MANAGER: 'Manager',
+      ADMIN: 'Admin',
+      RECEPTIONIST: 'Receptionist',
+      BAR_STAFF: 'Lounge Staff',
+      HOUSEKEEPING: 'Housekeeping',
+    };
+    return roleMap[role] || role?.replace('_', ' ') || 'User';
+  };
+
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
       {/* Mobile sidebar */}
@@ -171,7 +194,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                               {user?.first_name} {user?.last_name}
                             </p>
                             <p className="text-xs text-[#8A8377] truncate">
-                              {user?.role?.replace('_', ' ')}
+                              {getRoleDisplay(user?.role || '')}
                             </p>
                           </div>
                         </div>
@@ -206,7 +229,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       {user?.first_name} {user?.last_name}
                     </p>
                     <p className="text-xs text-[#8A8377] truncate">
-                      {user?.role?.replace('_', ' ')}
+                      {getRoleDisplay(user?.role || '')}
                     </p>
                   </div>
                 </div>
