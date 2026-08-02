@@ -1,8 +1,29 @@
 // frontend/lib/api/hooks/useRooms.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../client';
-import { Room } from '../types';
 import toast from 'react-hot-toast';
+
+export interface Room {
+  id: string;
+  room_number: string;
+  room_type: 'standard' | 'deluxe' | 'suite' | 'executive' | 'presidential';
+  room_type_display: string;
+  base_price: number;
+  barcode: string;
+  status: 'available' | 'occupied' | 'maintenance' | 'cleaning' | 'reserved';
+  status_display: string;
+  description: string;
+  capacity: number;
+  name: string;
+  size: number;
+  amenities: string[];
+  rating: number;
+  review_count: number;
+  is_featured: boolean;
+  slug: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export const roomApi = {
   getAll: async (params?: any) => {
@@ -38,9 +59,45 @@ export const roomApi = {
   delete: async (id: string) => {
     await api.delete(`/rooms/${id}/`);
   },
+
+  // Public endpoints (no auth required)
+  getPublicRooms: async (filters?: {
+    status?: string;
+    room_type?: string;
+    is_featured?: boolean;
+    search?: string;
+    ordering?: string;
+  }) => {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.room_type) params.append('room_type', filters.room_type);
+    if (filters?.is_featured !== undefined) params.append('is_featured', String(filters.is_featured));
+    if (filters?.search) params.append('search', filters.search);
+    if (filters?.ordering) params.append('ordering', filters.ordering);
+    
+    const { data } = await api.get(`/rooms/public/?${params.toString()}`);
+    return data;
+  },
+
+  getPublicRoomBySlug: async (slug: string) => {
+    const { data } = await api.get(`/rooms/public/${slug}/`);
+    return data;
+  },
+
+  checkAvailability: async (checkIn: string, checkOut: string, roomType?: string) => {
+    const params = new URLSearchParams({
+      check_in: checkIn,
+      check_out: checkOut,
+    });
+    if (roomType) params.append('room_type', roomType);
+    
+    const { data } = await api.get(`/rooms/public/availability/?${params.toString()}`);
+    return data;
+  },
 };
 
-// React Query Hooks
+// ============ ADMIN HOOKS (Require Auth) ============
+
 export const useRooms = (params?: any) => {
   return useQuery({
     queryKey: ['rooms', params],
@@ -120,5 +177,39 @@ export const useDeleteRoom = () => {
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to delete room');
     },
+  });
+};
+
+// ============ PUBLIC HOOKS (No Auth Required) ============
+
+export const usePublicRooms = (filters?: {
+  status?: string;
+  room_type?: string;
+  is_featured?: boolean;
+  search?: string;
+  ordering?: string;
+}) => {
+  return useQuery({
+    queryKey: ['public-rooms', filters],
+    queryFn: () => roomApi.getPublicRooms(filters),
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const usePublicRoom = (slug: string) => {
+  return useQuery({
+    queryKey: ['public-room', slug],
+    queryFn: () => roomApi.getPublicRoomBySlug(slug),
+    enabled: !!slug,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useCheckAvailability = (checkIn: string, checkOut: string, roomType?: string) => {
+  return useQuery({
+    queryKey: ['room-availability', checkIn, checkOut, roomType],
+    queryFn: () => roomApi.checkAvailability(checkIn, checkOut, roomType),
+    enabled: !!checkIn && !!checkOut,
+    staleTime: 2 * 60 * 1000,
   });
 };

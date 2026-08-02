@@ -15,7 +15,8 @@ import {
   XCircleIcon,
   Squares2X2Icon,
   Bars3Icon,
-  BuildingOffice2Icon, // Alternative for rooms/rooms
+  BuildingOffice2Icon,
+  StarIcon,
 } from '@heroicons/react/24/outline';
 import { useRooms, useUpdateRoomStatus } from '@/lib/api/hooks/useRooms';
 import RoomCard from './components/RoomCard';
@@ -52,6 +53,13 @@ const statusConfig = {
     border: 'border-[#90CAF9]',
     icon: SparklesIcon,
   },
+  reserved: {
+    label: 'Reserved',
+    bg: 'bg-[#F3E5F5]',
+    text: 'text-[#6A1B9A]',
+    border: 'border-[#CE93D8]',
+    icon: StarIcon,
+  },
 };
 
 export default function RoomsPage() {
@@ -69,7 +77,8 @@ export default function RoomsPage() {
   const filteredRooms = rooms?.filter(room => {
     const matchesSearch = !searchTerm || 
       room.room_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      room.room_type.toLowerCase().includes(searchTerm.toLowerCase());
+      room.room_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      room.name?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || room.status === statusFilter;
     const matchesType = typeFilter === 'all' || room.room_type === typeFilter;
     return matchesSearch && matchesStatus && matchesType;
@@ -81,6 +90,7 @@ export default function RoomsPage() {
   const occupiedRooms = rooms?.filter(r => r.status === 'occupied').length || 0;
   const maintenanceRooms = rooms?.filter(r => r.status === 'maintenance').length || 0;
   const cleaningRooms = rooms?.filter(r => r.status === 'cleaning').length || 0;
+  const reservedRooms = rooms?.filter(r => r.status === 'reserved').length || 0;
 
   const handleStatusChange = (id: string, newStatus: string) => {
     updateStatus.mutate({ id, status: newStatus });
@@ -114,7 +124,7 @@ export default function RoomsPage() {
           </div>
           
           {/* Stats Overview */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
             <div className="bg-white border border-[#DDD5C4] rounded-xl p-4">
               <p className="font-body text-sm text-[#8A8377] mb-1">Total Rooms</p>
               <p className="font-display text-2xl font-medium text-[#2A2622]">{totalRooms}</p>
@@ -135,6 +145,10 @@ export default function RoomsPage() {
               <p className="font-body text-sm text-[#8A8377] mb-1">Maintenance</p>
               <p className="font-display text-2xl font-medium text-[#E65100]">{maintenanceRooms}</p>
             </div>
+            <div className="bg-white border border-[#DDD5C4] rounded-xl p-4">
+              <p className="font-body text-sm text-[#8A8377] mb-1">Reserved</p>
+              <p className="font-display text-2xl font-medium text-[#6A1B9A]">{reservedRooms}</p>
+            </div>
           </div>
           
           {/* Search and Filters */}
@@ -144,7 +158,7 @@ export default function RoomsPage() {
                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#8A8377]" />
                 <input
                   type="text"
-                  placeholder="Search by room number or type..."
+                  placeholder="Search by room number, name, or type..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="font-body w-full pl-10 pr-4 py-2 border border-[#DDD5C4] rounded-lg bg-[#FAF6EF] text-[#2A2622] outline-none transition-colors focus:border-[#C9A468] focus:ring-1 focus:ring-[#C9A468] placeholder:text-[#8A8377]"
@@ -226,7 +240,6 @@ export default function RoomsPage() {
                       <th className="px-6 py-3 text-left font-body text-xs font-medium text-[#8A8377] uppercase tracking-wider">Room</th>
                       <th className="px-6 py-3 text-left font-body text-xs font-medium text-[#8A8377] uppercase tracking-wider">Type</th>
                       <th className="px-6 py-3 text-left font-body text-xs font-medium text-[#8A8377] uppercase tracking-wider">Price/Night</th>
-                      <th className="px-6 py-3 text-left font-body text-xs font-medium text-[#8A8377] uppercase tracking-wider">Short Rest</th>
                       <th className="px-6 py-3 text-left font-body text-xs font-medium text-[#8A8377] uppercase tracking-wider">Status</th>
                       <th className="px-6 py-3 text-left font-body text-xs font-medium text-[#8A8377] uppercase tracking-wider">Capacity</th>
                       <th className="px-6 py-3 text-right font-body text-xs font-medium text-[#8A8377] uppercase tracking-wider">Actions</th>
@@ -243,26 +256,20 @@ export default function RoomsPage() {
                             <div className="flex items-center gap-2">
                               <BuildingOffice2Icon className="h-4 w-4 text-[#C9A468]" />
                               <span className="font-body font-medium text-[#2A2622]">
-                                Room {room.room_number}
+                                {room.name || `Room ${room.room_number}`}
+                              </span>
+                              <span className="font-body text-xs text-[#8A8377]">
+                                #{room.room_number}
                               </span>
                             </div>
                           </td>
-                          <td className="px-6 py-4 font-body text-sm text-[#5B564B] capitalize">{room.room_type}</td>
+                          <td className="px-6 py-4 font-body text-sm text-[#5B564B] capitalize">
+                            {room.room_type_display || room.room_type}
+                          </td>
                           <td className="px-6 py-4">
                             <span className="font-body font-medium text-[#16302B]">
                               ₦{room.base_price?.toLocaleString() || 0}
                             </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            {room.status === 'available' && (
-                              <button
-                                onClick={() => handleShortRestClick(room)}
-                                className="font-body inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#C9A468] text-[#F7F1E4] text-xs font-medium rounded-lg hover:bg-[#B8924F] transition-colors"
-                              >
-                                <ClockIcon className="h-3.5 w-3.5" />
-                                Short Rest
-                              </button>
-                            )}
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
@@ -275,6 +282,7 @@ export default function RoomsPage() {
                                 <option value="occupied">Occupied</option>
                                 <option value="cleaning">Cleaning</option>
                                 <option value="maintenance">Maintenance</option>
+                                <option value="reserved">Reserved</option>
                               </select>
                             </div>
                           </td>
