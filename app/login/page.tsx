@@ -5,7 +5,15 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/api/hooks/useAuth';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { 
+  EyeIcon, 
+  EyeSlashIcon,
+  KeyIcon,
+  ShieldCheckIcon,
+  BuildingOfficeIcon,
+  ShoppingBagIcon,
+  BriefcaseIcon
+} from '@heroicons/react/24/outline';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -181,9 +189,13 @@ export default function LoginPage() {
 
           {/* Quick Demo Test Logins */}
           <div className="mt-8 pt-6 border-t border-[#DDD5C4]">
-            <p className="font-body text-xs font-semibold uppercase tracking-wider text-[#8A8377] mb-3">
-              🧪 Quick Test Credentials (Click to fill)
-            </p>
+            <div className="flex items-center gap-1.5 mb-3 text-[#8A8377]">
+              <KeyIcon className="h-3.5 w-3.5 text-[#B8905B]" />
+              <p className="font-body text-xs font-semibold uppercase tracking-wider">
+                Quick Test Credentials (Click to fill)
+              </p>
+            </div>
+
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -193,7 +205,10 @@ export default function LoginPage() {
                 }}
                 className="p-2.5 text-left rounded-lg bg-[#F7F1E4] hover:bg-[#EADFCB] border border-[#DDD5C4] transition-all group"
               >
-                <p className="font-display text-xs font-semibold text-[#16302B]">👑 Admin / CEO</p>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <ShieldCheckIcon className="h-3.5 w-3.5 text-[#C9A468] group-hover:scale-110 transition-transform" />
+                  <p className="font-display text-xs font-semibold text-[#16302B]">Admin / CEO</p>
+                </div>
                 <p className="font-body text-[11px] text-[#8A8377] group-hover:text-[#5B564B]">admin / admin123</p>
               </button>
 
@@ -205,7 +220,10 @@ export default function LoginPage() {
                 }}
                 className="p-2.5 text-left rounded-lg bg-[#F7F1E4] hover:bg-[#EADFCB] border border-[#DDD5C4] transition-all group"
               >
-                <p className="font-display text-xs font-semibold text-[#16302B]">🏨 Receptionist</p>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <BuildingOfficeIcon className="h-3.5 w-3.5 text-[#C9A468] group-hover:scale-110 transition-transform" />
+                  <p className="font-display text-xs font-semibold text-[#16302B]">Receptionist</p>
+                </div>
                 <p className="font-body text-[11px] text-[#8A8377] group-hover:text-[#5B564B]">reception / reception123</p>
               </button>
 
@@ -217,7 +235,10 @@ export default function LoginPage() {
                 }}
                 className="p-2.5 text-left rounded-lg bg-[#F7F1E4] hover:bg-[#EADFCB] border border-[#DDD5C4] transition-all group"
               >
-                <p className="font-display text-xs font-semibold text-[#16302B]">🍸 Bar / POS Staff</p>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <ShoppingBagIcon className="h-3.5 w-3.5 text-[#C9A468] group-hover:scale-110 transition-transform" />
+                  <p className="font-display text-xs font-semibold text-[#16302B]">Bar / POS Staff</p>
+                </div>
                 <p className="font-body text-[11px] text-[#8A8377] group-hover:text-[#5B564B]">barstaff / bar123</p>
               </button>
 
@@ -229,7 +250,10 @@ export default function LoginPage() {
                 }}
                 className="p-2.5 text-left rounded-lg bg-[#F7F1E4] hover:bg-[#EADFCB] border border-[#DDD5C4] transition-all group"
               >
-                <p className="font-display text-xs font-semibold text-[#16302B]">👔 Manager</p>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <BriefcaseIcon className="h-3.5 w-3.5 text-[#C9A468] group-hover:scale-110 transition-transform" />
+                  <p className="font-display text-xs font-semibold text-[#16302B]">Manager</p>
+                </div>
                 <p className="font-body text-[11px] text-[#8A8377] group-hover:text-[#5B564B]">manager / manager123</p>
               </button>
             </div>
