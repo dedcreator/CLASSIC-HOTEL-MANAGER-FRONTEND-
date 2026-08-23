@@ -9,7 +9,9 @@ import {
   LockClosedIcon, 
   BuildingOfficeIcon,
   ArrowPathIcon,
-  UserIcon
+  UserIcon,
+  SparklesIcon,
+  BoltIcon
 } from '@heroicons/react/24/outline';
 import { useInitializePayment, useVerifyPayment } from '@/lib/api/hooks/usePayments';
 import toast from 'react-hot-toast';
@@ -29,7 +31,7 @@ interface PaymentModalProps {
   onGuestInfoChange?: (data: { name: string; email: string; phone: string }) => void;
 }
 
-type PaymentChannel = 'card' | 'bank_transfer';
+type PaymentChannel = 'card' | 'bank_transfer' | 'mock_instant';
 
 export default function PaymentModal({ 
   total, 
@@ -149,6 +151,26 @@ export default function PaymentModal({
 
       setPaymentReference(result.reference);
       setPaymentLink(result.payment_link);
+
+      // For mock instant payments
+      if (selectedChannel === 'mock_instant') {
+        setTimeout(() => {
+          setPaymentStatus('completed');
+          setIsProcessing(false);
+          onComplete({
+            paymentMethod: 'korapay',
+            transactionReference: result.reference,
+            amountPaid: safeTotal,
+            guestName: localGuestName || 'Walk-in Guest',
+            guestEmail: localGuestEmail,
+            guestPhone: localGuestPhone,
+            paymentData: result.payment || result,
+            channel: 'mock_instant',
+          });
+          toast.success('⚡ Test / Mock payment simulated successfully!');
+        }, 800);
+        return;
+      }
 
       // For bank transfers, show bank details
       if (selectedChannel === 'bank_transfer') {
@@ -431,30 +453,45 @@ export default function PaymentModal({
           {paymentStatus === 'idle' && (
             <div>
               <p className="font-body text-sm font-medium text-[#5B564B] mb-3">Select Payment Method</p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 <button
+                  type="button"
                   onClick={() => setSelectedChannel('card')}
-                  className={`p-4 rounded-lg border-2 transition-all ${
+                  className={`p-3 rounded-lg border-2 transition-all text-center ${
                     selectedChannel === 'card'
                       ? 'border-[#C9A468] bg-[#F7F1E4]'
                       : 'border-[#DDD5C4] hover:border-[#B9C4B9]'
                   }`}
                 >
-                  <CreditCardIcon className="h-6 w-6 mx-auto text-[#16302B]" />
-                  <p className="font-body text-sm font-medium text-[#2A2622] mt-1">Card</p>
-                  <p className="font-body text-xs text-[#8A8377]">Visa, Mastercard, Verve</p>
+                  <CreditCardIcon className="h-5 w-5 mx-auto text-[#16302B]" />
+                  <p className="font-body text-xs font-semibold text-[#2A2622] mt-1">Card</p>
+                  <p className="font-body text-[10px] text-[#8A8377]">Korapay Card</p>
                 </button>
                 <button
+                  type="button"
                   onClick={() => setSelectedChannel('bank_transfer')}
-                  className={`p-4 rounded-lg border-2 transition-all ${
+                  className={`p-3 rounded-lg border-2 transition-all text-center ${
                     selectedChannel === 'bank_transfer'
                       ? 'border-[#C9A468] bg-[#F7F1E4]'
                       : 'border-[#DDD5C4] hover:border-[#B9C4B9]'
                   }`}
                 >
-                  <BuildingOfficeIcon className="h-6 w-6 mx-auto text-[#16302B]" />
-                  <p className="font-body text-sm font-medium text-[#2A2622] mt-1">Bank Transfer</p>
-                  <p className="font-body text-xs text-[#8A8377]">Direct bank transfer</p>
+                  <BuildingOfficeIcon className="h-5 w-5 mx-auto text-[#16302B]" />
+                  <p className="font-body text-xs font-semibold text-[#2A2622] mt-1">Transfer</p>
+                  <p className="font-body text-[10px] text-[#8A8377]">Bank Transfer</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedChannel('mock_instant')}
+                  className={`p-3 rounded-lg border-2 transition-all text-center ${
+                    selectedChannel === 'mock_instant'
+                      ? 'border-[#2E7D32] bg-[#E8F5E9]'
+                      : 'border-[#DDD5C4] hover:border-[#B9C4B9]'
+                  }`}
+                >
+                  <SparklesIcon className="h-5 w-5 mx-auto text-[#2E7D32]" />
+                  <p className="font-body text-xs font-semibold text-[#16302B] mt-1">⚡ Mock Pay</p>
+                  <p className="font-body text-[10px] text-[#2E7D32]">Test Demo</p>
                 </button>
               </div>
             </div>
@@ -466,7 +503,11 @@ export default function PaymentModal({
               <LockClosedIcon className="h-5 w-5 text-[#1E40AF]" />
               <div>
                 <p className="font-body text-sm font-medium text-[#1E40AF]">Secure Payment</p>
-                <p className="font-body text-xs text-[#1E40AF]">Your payment is secured by Korapay</p>
+                <p className="font-body text-xs text-[#1E40AF]">
+                  {selectedChannel === 'mock_instant' 
+                    ? 'Test Simulation Mode: Instantly verifies without real charge' 
+                    : 'Your payment is secured by Korapay'}
+                </p>
               </div>
             </div>
           </div>
@@ -500,10 +541,15 @@ export default function PaymentModal({
                         <CreditCardIcon className="h-5 w-5" />
                         Pay with Card
                       </>
-                    ) : (
+                    ) : selectedChannel === 'bank_transfer' ? (
                       <>
                         <BuildingOfficeIcon className="h-5 w-5" />
-                        Generate Transfer Details
+                        Generate Transfer
+                      </>
+                    ) : (
+                      <>
+                        <BoltIcon className="h-5 w-5 text-[#C9A468]" />
+                        Simulate Mock Pay
                       </>
                     )}
                   </>

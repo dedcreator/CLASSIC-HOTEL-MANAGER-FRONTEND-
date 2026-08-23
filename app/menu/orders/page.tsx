@@ -205,6 +205,7 @@ export default function OrderManagementPage() {
                             <option value="preparing">Preparing</option>
                             <option value="ready">Ready</option>
                             <option value="served">Served</option>
+                            <option value="paid">Paid</option>
                             <option value="cancelled">Cancel</option>
                           </select>
                         )}

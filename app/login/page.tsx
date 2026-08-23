@@ -178,6 +178,62 @@ export default function LoginPage() {
               )}
             </button>
           </form>
+
+          {/* Quick Demo Test Logins */}
+          <div className="mt-8 pt-6 border-t border-[#DDD5C4]">
+            <p className="font-body text-xs font-semibold uppercase tracking-wider text-[#8A8377] mb-3">
+              🧪 Quick Test Credentials (Click to fill)
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setUsername('admin');
+                  setPassword('admin123');
+                }}
+                className="p-2.5 text-left rounded-lg bg-[#F7F1E4] hover:bg-[#EADFCB] border border-[#DDD5C4] transition-all group"
+              >
+                <p className="font-display text-xs font-semibold text-[#16302B]">👑 Admin / CEO</p>
+                <p className="font-body text-[11px] text-[#8A8377] group-hover:text-[#5B564B]">admin / admin123</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setUsername('reception');
+                  setPassword('reception123');
+                }}
+                className="p-2.5 text-left rounded-lg bg-[#F7F1E4] hover:bg-[#EADFCB] border border-[#DDD5C4] transition-all group"
+              >
+                <p className="font-display text-xs font-semibold text-[#16302B]">🏨 Receptionist</p>
+                <p className="font-body text-[11px] text-[#8A8377] group-hover:text-[#5B564B]">reception / reception123</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setUsername('barstaff');
+                  setPassword('bar123');
+                }}
+                className="p-2.5 text-left rounded-lg bg-[#F7F1E4] hover:bg-[#EADFCB] border border-[#DDD5C4] transition-all group"
+              >
+                <p className="font-display text-xs font-semibold text-[#16302B]">🍸 Bar / POS Staff</p>
+                <p className="font-body text-[11px] text-[#8A8377] group-hover:text-[#5B564B]">barstaff / bar123</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setUsername('manager');
+                  setPassword('manager123');
+                }}
+                className="p-2.5 text-left rounded-lg bg-[#F7F1E4] hover:bg-[#EADFCB] border border-[#DDD5C4] transition-all group"
+              >
+                <p className="font-display text-xs font-semibold text-[#16302B]">👔 Manager</p>
+                <p className="font-body text-[11px] text-[#8A8377] group-hover:text-[#5B564B]">manager / manager123</p>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
