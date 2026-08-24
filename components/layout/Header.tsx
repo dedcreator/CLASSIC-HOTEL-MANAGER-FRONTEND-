@@ -26,8 +26,28 @@ export default function Header({ setSidebarOpen }: HeaderProps) {
   return (
     <>
       <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-[#DDD5C4] bg-white/95 backdrop-blur-sm px-4 shadow-sm sm:px-6 lg:px-8">
-        {/* Left section */}
-        <div className="flex items-center gap-x-4">
+        {/* Left section: Mobile Hamburger Toggle + Brand */}
+        <div className="flex items-center gap-x-3">
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(true)}
+            className="lg:hidden -ml-1.5 p-2 rounded-lg text-[#5B564B] hover:text-[#16302B] hover:bg-[#F7F1E4] focus:outline-none focus:ring-2 focus:ring-[#C9A468] transition-colors"
+            aria-label="Open navigation sidebar"
+          >
+            <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+          </button>
+
+          {/* Mobile brand logo */}
+          <Link href="/" className="flex items-center gap-x-2.5 lg:hidden">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#16302B] shadow-sm">
+              <span className="font-display text-base font-semibold text-[#C9A468]">H</span>
+            </div>
+            <div>
+              <span className="font-display text-base font-semibold text-[#2A2622] tracking-tight">
+                Hotel <span className="text-[#C9A468]">Manager</span>
+              </span>
+            </div>
+          </Link>
         </div>
 
         {/* Right section */}

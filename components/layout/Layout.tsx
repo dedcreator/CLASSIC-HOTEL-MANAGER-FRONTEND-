@@ -22,6 +22,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/api/hooks/useAuth';
 import Header from './Header';
+import BottomNav from './BottomNav';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon, roles: ['CEO', 'MANAGER', 'ADMIN', 'RECEPTIONIST', 'BAR_STAFF'] },
@@ -62,14 +63,16 @@ const NavLinks = ({ pathname, onClickLink }: { pathname: string; onClickLink?: (
   return (
     <ul role="list" className="-mx-2 space-y-1">
       {filteredNavigation.map((item) => {
-        const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+        const isActive = item.href === '/'
+          ? pathname === '/'
+          : pathname === item.href || pathname?.startsWith(item.href + '/');
         return (
           <li key={item.name}>
             <Link
               href={item.href}
               onClick={onClickLink}
               className={`
-                group flex items-center gap-x-3 rounded-lg px-3 py-2.5 text-sm leading-6 font-medium transition-all duration-200
+                group flex items-center gap-x-3 rounded-lg px-3 py-2.5 text-sm leading-6 font-medium transition-all duration-200 min-h-[44px]
                 ${isActive
                   ? 'bg-[#16302B] text-[#F7F1E4] shadow-sm'
                   : 'text-[#5B564B] hover:text-[#16302B] hover:bg-[#F7F1E4]'
@@ -94,10 +97,10 @@ const NavLinks = ({ pathname, onClickLink }: { pathname: string; onClickLink?: (
   );
 };
 
-const Logo = () => (
-  <div className="flex h-16 shrink-0 items-center border-b border-[#DDD5C4]">
+const Logo = ({ noBorder }: { noBorder?: boolean }) => (
+  <div className={`flex h-16 shrink-0 items-center ${noBorder ? '' : 'border-b border-[#DDD5C4]'}`}>
     <div className="flex items-center gap-x-3">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#16302B]">
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#16302B] shadow-sm">
         <span className="font-display text-lg font-semibold text-[#C9A468]">H</span>
       </div>
       <div>
@@ -138,7 +141,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
-      {/* Mobile sidebar */}
+      {/* Mobile sidebar dialog drawer */}
       <Transition.Root show={sidebarOpen} as={Fragment}>
         <Dialog as="div" className="relative z-50 lg:hidden" onClose={setSidebarOpen}>
           <Transition.Child
@@ -164,16 +167,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               leaveTo="-translate-x-full"
             >
               <Dialog.Panel className="relative mr-16 flex w-full max-w-xs flex-1">
-                <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-4 pb-4 shadow-xl">
-                  <div className="flex items-center justify-between border-b border-[#DDD5C4] py-4">
-                    <Logo />
+                <div className="flex grow flex-col gap-y-4 overflow-y-auto bg-white px-4 pb-4 shadow-xl">
+                  {/* Mobile Drawer Header */}
+                  <div className="flex items-center justify-between border-b border-[#DDD5C4] py-2">
+                    <Logo noBorder />
                     <button
+                      type="button"
                       onClick={() => setSidebarOpen(false)}
-                      className="rounded-lg p-1.5 text-[#8A8377] hover:bg-[#F7F1E4] hover:text-[#16302B] transition-colors"
+                      className="rounded-lg p-2 text-[#8A8377] hover:bg-[#F7F1E4] hover:text-[#16302B] focus:outline-none focus:ring-2 focus:ring-[#C9A468] transition-colors"
+                      aria-label="Close sidebar"
                     >
                       <XMarkIcon className="h-6 w-6" />
                     </button>
                   </div>
+                  
+                  {/* Nav links */}
                   <nav className="flex flex-1 flex-col">
                     <ul role="list" className="flex flex-1 flex-col gap-y-3">
                       <li>
@@ -185,8 +193,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       
                       {/* User section at bottom of mobile sidebar */}
                       <li className="mt-auto pt-4 border-t border-[#DDD5C4]">
-                        <div className="flex items-center gap-x-3 px-3 py-2">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#16302B] text-sm font-medium text-[#F7F1E4]">
+                        <div className="flex items-center gap-x-3 px-3 py-2 rounded-lg bg-[#F7F1E4]">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#16302B] text-sm font-medium text-[#F7F1E4]">
                             {getInitials()}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -221,7 +229,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               {/* User section at bottom of sidebar */}
               <li className="pt-4 border-t border-[#DDD5C4]">
                 <div className="flex items-center gap-x-3 rounded-lg px-3 py-2 bg-[#F7F1E4]">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#16302B] text-sm font-medium text-[#F7F1E4]">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#16302B] text-sm font-medium text-[#F7F1E4]">
                     {getInitials()}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -239,14 +247,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
+      {/* Main page content area */}
       <div className="lg:pl-64">
         <Header setSidebarOpen={setSidebarOpen} />
-        <main className="py-8">
+        <main className="py-6 sm:py-8 pb-24 lg:pb-8">
           <div className="px-4 sm:px-6 lg:px-8">
             {children}
           </div>
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <BottomNav setSidebarOpen={setSidebarOpen} />
     </div>
   );
 }
