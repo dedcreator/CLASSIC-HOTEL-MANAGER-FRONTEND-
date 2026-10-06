@@ -12,7 +12,8 @@ import {
   ShieldCheckIcon,
   BuildingOfficeIcon,
   ShoppingBagIcon,
-  BriefcaseIcon
+  BriefcaseIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 
 export default function LoginPage() {
@@ -255,6 +256,21 @@ export default function LoginPage() {
                   <p className="font-display text-xs font-semibold text-[#16302B]">Manager</p>
                 </div>
                 <p className="font-body text-[11px] text-[#8A8377] group-hover:text-[#5B564B]">manager / manager123</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setUsername('housekeeping');
+                  setPassword('housekeeping123');
+                }}
+                className="p-2.5 text-left rounded-lg bg-[#F7F1E4] hover:bg-[#EADFCB] border border-[#DDD5C4] transition-all col-span-2 sm:col-span-1 group"
+              >
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <SparklesIcon className="h-3.5 w-3.5 text-[#C9A468] group-hover:scale-110 transition-transform" />
+                  <p className="font-display text-xs font-semibold text-[#16302B]">Housekeeping</p>
+                </div>
+                <p className="font-body text-[11px] text-[#8A8377] group-hover:text-[#5B564B]">housekeeping / housekeeping123</p>
               </button>
             </div>
           </div>
