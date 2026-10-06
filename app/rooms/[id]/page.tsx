@@ -16,11 +16,12 @@ import {
 import { useRoom, useUpdateRoomStatus } from '@/lib/api/hooks/useRooms';
 import Layout from '@/components/layout/Layout';
 
-const statusColors = {
+const statusColors: Record<string, string> = {
   available: 'bg-green-100 text-green-800',
   occupied: 'bg-red-100 text-red-800',
   maintenance: 'bg-yellow-100 text-yellow-800',
   cleaning: 'bg-blue-100 text-blue-800',
+  reserved: 'bg-purple-100 text-purple-800',
 };
 
 const roomTypeLabels = {

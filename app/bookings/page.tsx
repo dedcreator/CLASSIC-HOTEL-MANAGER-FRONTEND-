@@ -45,7 +45,7 @@ export default function BookingsPage() {
 
   const { data: stats } = useBookingStats();
 
-  const filteredBookings = bookings?.filter((booking) => {
+  const filteredBookings = bookings?.filter((booking: any) => {
     if (dateFilter) {
       const bookingDate = new Date(booking.check_in).toISOString().split('T')[0];
       if (bookingDate !== dateFilter) return false;
@@ -171,7 +171,7 @@ export default function BookingsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredBookings.map((booking) => (
+            {filteredBookings.map((booking: any) => (
               <div
                 key={booking.id}
                 onClick={() => router.push(`/bookings/${booking.id}`)}

@@ -1,8 +1,42 @@
 // frontend/lib/api/hooks/useSales.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../client';
-import { Sale, TodaySales, RevenueReport } from '../types';
+import { Sale, TodaySales, RevenueReport, Customer } from '../types';
 import toast from 'react-hot-toast';
+
+export const customersApi = {
+  search: async (search?: string) => {
+    const { data } = await api.get<Customer[]>('/sales/customers/', {
+      params: search ? { search } : undefined,
+    });
+    return data;
+  },
+  create: async (customerData: Partial<Customer>) => {
+    const { data } = await api.post<Customer>('/sales/customers/', customerData);
+    return data;
+  },
+};
+
+export const useSearchCustomers = (search?: string) => {
+  return useQuery({
+    queryKey: ['customers', search],
+    queryFn: () => customersApi.search(search),
+  });
+};
+
+export const useCreateCustomer = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (customerData: Partial<Customer>) => customersApi.create(customerData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      toast.success('Customer created successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to create customer');
+    },
+  });
+};
 
 export const salesApi = {
   getAll: async (params?: any) => {

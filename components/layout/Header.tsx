@@ -15,6 +15,7 @@ import {
 import { useAuth } from '@/lib/api/hooks/useAuth';
 import Link from 'next/link';
 import Image from 'next/image';
+import NotificationBell from './NotificationBell';
 
 interface HeaderProps {
   setSidebarOpen: (open: boolean) => void;
@@ -60,8 +61,8 @@ export default function Header({ setSidebarOpen }: HeaderProps) {
             </span>
           </div>
 
-       
-
+          {/* Notifications */}
+          <NotificationBell />
           {/* Profile dropdown */}
           <Menu as="div" className="relative">
             {({ open }) => (

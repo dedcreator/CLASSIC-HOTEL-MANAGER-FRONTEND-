@@ -102,7 +102,7 @@ export default function StaffDetailPage() {
     let roomCharges = 0;
 
     if (sales) {
-      sales.forEach(sale => {
+      sales.forEach((sale: any) => {
         totalSales += sale.total_amount;
         switch (sale.payment_method) {
           case 'cash':
@@ -122,7 +122,7 @@ export default function StaffDetailPage() {
     }
 
     if (bookings) {
-      totalBookings = bookings.reduce((sum, booking) => sum + booking.total_amount, 0);
+      totalBookings = bookings.reduce((sum: number, booking: any) => sum + (Number(booking.total_amount) || 0), 0);
     }
 
     return {
@@ -177,13 +177,13 @@ export default function StaffDetailPage() {
     let csvContent = "Date,Type,Reference,Amount,Payment Method,Details\n";
     
     if (sales && sales.length > 0) {
-      sales.forEach(sale => {
+      sales.forEach((sale: any) => {
         csvContent += `${format(new Date(sale.created_at), 'yyyy-MM-dd HH:mm')},Sale,${sale.transaction_number},${sale.total_amount},${sale.payment_method},${sale.items?.length || 0} items\n`;
       });
     }
     
     if (bookings && bookings.length > 0) {
-      bookings.forEach(booking => {
+      bookings.forEach((booking: any) => {
         csvContent += `${format(new Date(booking.created_at), 'yyyy-MM-dd HH:mm')},Booking,${booking.booking_reference},${booking.total_amount},${booking.payment_method || 'N/A'},Room ${booking.room?.room_number}\n`;
       });
     }

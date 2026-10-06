@@ -1,16 +1,70 @@
 // frontend/lib/api/types.ts
+export interface RoomAccessCode {
+  id: string;
+  code: string;
+  code_type: 'checkin' | 'emergency' | 'cleaning';
+  code_type_display?: string;
+  room: string;
+  room_number: string;
+  booking?: string | null;
+  status: 'pending_approval' | 'active' | 'expired' | 'used' | 'revoked';
+  status_display?: string;
+  is_valid: boolean;
+  created_by?: string | null;
+  created_by_name?: string | null;
+  created_by_role?: string | null;
+  approved_by?: string | null;
+  approved_by_name?: string | null;
+  approved_by_role?: string | null;
+  approved_at?: string | null;
+  valid_from: string;
+  valid_until: string;
+  reason?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SecurityAuditLog {
+  id: string;
+  timestamp: string;
+  actor?: string | null;
+  actor_username: string;
+  actor_role: string;
+  actor_display?: string;
+  action: string;
+  action_display?: string;
+  room?: string | null;
+  room_number?: string;
+  booking?: string | null;
+  booking_reference?: string;
+  access_code?: string;
+  details: string;
+  ip_address?: string | null;
+}
+
 // Room Types
 export interface Room {
   id: string;
   room_number: string;
-  room_type: 'standard' | 'deluxe' | 'suite' | 'executive';
+  room_type: 'standard' | 'deluxe' | 'suite' | 'executive' | 'presidential';
+  room_type_display?: string;
   base_price: number;
-  barcode: string;
-  status: 'available' | 'occupied' | 'maintenance' | 'cleaning';
-  capacity: number;
+  barcode?: string;
+  status: 'available' | 'occupied' | 'maintenance' | 'cleaning' | 'reserved';
+  status_display?: string;
+  capacity?: number;
   description?: string;
+  name?: string;
+  size?: number;
+  amenities?: string[];
+  rating?: number;
+  review_count?: number;
+  is_featured?: boolean;
+  slug?: string;
   created_at: string;
   updated_at: string;
+  active_access_code?: RoomAccessCode | null;
+  pending_cleaning_request?: RoomAccessCode | null;
 }
 
 // Product/Inventory Types
@@ -20,7 +74,7 @@ export interface Product {
   category: 'beer' | 'wine' | 'spirit' | 'soft_drink' | 'juice' | 'cocktail' | 'food' | 'other';
   default_price: number;
   unit: 'bottle' | 'pint' | 'glass' | 'can' | 'shot' | 'plate' | 'unit';
-  barcode: string;
+  barcode?: string | null;
   min_stock_level: number;
   is_active: boolean;
   total_stock: number;
@@ -250,6 +304,7 @@ export interface Booking {
   checked_out_at?: string;
   created_at: string;
   updated_at: string;
+  active_access_code?: RoomAccessCode | null;
 }
 
 export interface TodayBookings {
@@ -348,4 +403,18 @@ export interface RevenueReport {
   profit: number;
   expenses: number;
   transactions: number;
+}
+
+// In-App Notification Types
+export interface InAppNotification {
+  id: string;
+  role_target?: string | null;
+  title: string;
+  message: string;
+  notification_type: 'room_checkout' | 'website_booking' | 'stock_added' | 'system';
+  data: Record<string, any>;
+  link?: string;
+  is_read: boolean;
+  is_read_by_me: boolean;
+  created_at: string;
 }

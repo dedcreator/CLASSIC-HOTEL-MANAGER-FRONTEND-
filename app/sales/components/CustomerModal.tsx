@@ -63,7 +63,7 @@ export default function CustomerSearch({ onSelect, onClose }: Props) {
           {/* Results */}
           {results && results.length > 0 && (
             <div className="space-y-2 max-h-60 overflow-y-auto mb-4">
-              {results.map((customer) => (
+              {results.map((customer: any) => (
                 <button
                   key={customer.id}
                   onClick={() => onSelect(customer)}

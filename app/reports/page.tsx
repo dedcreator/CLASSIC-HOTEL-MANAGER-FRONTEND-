@@ -35,7 +35,7 @@ import { useBookings } from '@/lib/api/hooks/useBookings';
 import { useExpenses, useExpenseSummary } from '@/lib/api/hooks/useExpenses';
 import { useStaff } from '@/lib/api/hooks/useStaff';
 import { useOrders } from '@/lib/api/hooks/useMenu';
-import { format, subDays, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
+import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import DateRangePicker from './components/DateRangePicker';
 
 const COLORS = {
@@ -108,8 +108,8 @@ export default function ReportsPage() {
 
   const filterByDateRange = (date: string) => {
     if (!date) return false;
-    const itemDate = new Date(date);
-    return isWithinInterval(itemDate, { start: dateRange.start, end: dateRange.end });
+    const itemTime = new Date(date).getTime();
+    return itemTime >= dateRange.start.getTime() && itemTime <= dateRange.end.getTime();
   };
 
   const filteredSales = sales?.filter((s: any) => s && filterByDateRange(s.created_at)) || [];
@@ -567,7 +567,7 @@ export default function ReportsPage() {
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} interval={Math.floor(chartData.length / 10)} />
                 <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `₦${(value / 1000).toFixed(0)}k`} />
                 <Tooltip
-                  formatter={(value: number) => [`₦${Math.round(value || 0).toLocaleString()}`, '']}
+                  formatter={(value: any) => [`₦${Math.round(Number(value) || 0).toLocaleString()}`, '']}
                   contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #DDD5C4' }}
                 />
                 <Area
@@ -594,7 +594,7 @@ export default function ReportsPage() {
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `₦${(value / 1000).toFixed(0)}k`} />
                   <Tooltip 
-                    formatter={(value: number) => [`₦${Math.round(value || 0).toLocaleString()}`, '']}
+                    formatter={(value: any) => [`₦${Math.round(Number(value) || 0).toLocaleString()}`, '']}
                     contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #DDD5C4' }}
                   />
                   <Legend />
@@ -619,14 +619,14 @@ export default function ReportsPage() {
                     outerRadius={100}
                     paddingAngle={3}
                     dataKey="value"
-                    label={({ name, percent }) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}
+                    label={({ name, percent }: any) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}
                   >
                     {salesByMethod.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value: number) => [`₦${Math.round(value || 0).toLocaleString()}`, '']}
+                    formatter={(value: any) => [`₦${Math.round(Number(value) || 0).toLocaleString()}`, '']}
                     contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #DDD5C4' }}
                   />
                 </PieChart>
@@ -684,14 +684,14 @@ export default function ReportsPage() {
                       outerRadius={100}
                       paddingAngle={3}
                       dataKey="total"
-                      label={({ category_name, percent }) => `${category_name} (${((percent || 0) * 100).toFixed(0)}%)`}
+                      label={({ category_name, percent }: any) => `${category_name} (${((percent || 0) * 100).toFixed(0)}%)`}
                     >
                       {expensesByCategory.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip 
-                      formatter={(value: number) => [`₦${Math.round(value || 0).toLocaleString()}`, '']}
+                      formatter={(value: any) => [`₦${Math.round(Number(value) || 0).toLocaleString()}`, '']}
                       contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #DDD5C4' }}
                     />
                   </PieChart>
@@ -699,7 +699,7 @@ export default function ReportsPage() {
               </div>
               <div className="space-y-2">
                 {expensesByCategory.map((category, index) => (
-                  <div key={category.category_id} className="flex justify-between items-center p-2 border-b border-[#F7F1E4]">
+                  <div key={category.category || index} className="flex justify-between items-center p-2 border-b border-[#F7F1E4]">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }} />
                       <span className="font-body text-sm text-[#5B564B]">{category.category_name}</span>

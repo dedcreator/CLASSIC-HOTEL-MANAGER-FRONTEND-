@@ -14,6 +14,7 @@ import {
   EyeIcon,
   DocumentTextIcon,
   PrinterIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { useOrders, useUpdateOrderStatus } from '@/lib/api/hooks/useMenu';
 import Layout from '@/components/layout/Layout';
@@ -27,6 +28,8 @@ interface Order {
   customer_name: string;
   items: any[];
   total_amount: number;
+  subtotal?: number;
+  tax?: number;
   status: 'pending' | 'preparing' | 'ready' | 'served' | 'paid' | 'cancelled';
   status_display: string;
   placed_at: string;

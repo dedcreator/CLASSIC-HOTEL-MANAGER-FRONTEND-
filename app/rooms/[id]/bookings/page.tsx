@@ -57,7 +57,7 @@ export default function RoomBookingsPage() {
 
   // Filter bookings for this room only
   const roomBookings = useMemo(() => {
-    return allBookings?.filter(booking => 
+    return allBookings?.filter((booking: any) => 
       booking.room?.id === roomId || 
       booking.room_details?.id === roomId ||
       booking.room_id === roomId
@@ -69,7 +69,7 @@ export default function RoomBookingsPage() {
   const cancelBooking = useCancelBooking();
 
   // Filter bookings by date and status
-  const filteredBookings = roomBookings.filter((booking) => {
+  const filteredBookings = roomBookings.filter((booking: any) => {
     if (dateFilter) {
       const bookingDate = new Date(booking.check_in).toISOString().split('T')[0];
       if (bookingDate !== dateFilter) return false;
@@ -81,15 +81,15 @@ export default function RoomBookingsPage() {
   // Calculate stats for this room only
   const stats = useMemo(() => {
     const total = roomBookings.length;
-    const confirmed = roomBookings.filter(b => b.status === 'confirmed').length;
-    const checkedIn = roomBookings.filter(b => b.status === 'checked_in').length;
-    const checkedOut = roomBookings.filter(b => b.status === 'checked_out').length;
-    const cancelled = roomBookings.filter(b => b.status === 'cancelled').length;
+    const confirmed = roomBookings.filter((b: any) => b.status === 'confirmed').length;
+    const checkedIn = roomBookings.filter((b: any) => b.status === 'checked_in').length;
+    const checkedOut = roomBookings.filter((b: any) => b.status === 'checked_out').length;
+    const cancelled = roomBookings.filter((b: any) => b.status === 'cancelled').length;
     
     // Calculate revenue from non-cancelled bookings only
     const totalRevenue = roomBookings
-      .filter(b => b.status !== 'cancelled') // Don't count cancelled bookings
-      .reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
+      .filter((b: any) => b.status !== 'cancelled') // Don't count cancelled bookings
+      .reduce((sum: number, b: any) => sum + (Number(b.total_amount) || 0), 0);
     
     return { total, confirmed, checkedIn, checkedOut, cancelled, totalRevenue };
   }, [roomBookings]);
@@ -279,7 +279,7 @@ export default function RoomBookingsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredBookings.map((booking) => (
+            {filteredBookings.map((booking: any) => (
               <div
                 key={booking.id}
                 className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-all"

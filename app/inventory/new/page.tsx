@@ -109,7 +109,7 @@ export default function NewProductPage() {
         is_premium: formData.is_premium,
       };
       
-      await createProduct.mutateAsync(productData);
+      await createProduct.mutateAsync(productData as any);
       router.push('/inventory');
     } catch (error: any) {
       console.error('Failed to create product:', error);

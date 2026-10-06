@@ -17,12 +17,14 @@ import {
   Bars3Icon,
   BuildingOffice2Icon,
   StarIcon,
+  ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 import { useRooms, useUpdateRoomStatus } from '@/lib/api/hooks/useRooms';
 import RoomCard from './components/RoomCard';
 import RoomFilters from './components/RoomFilters';
 import Layout from '@/components/layout/Layout';
 import ShortRestModal from './components/CheckInModal';
+import AuditTrailModal from './components/AuditTrailModal';
 
 const statusConfig = {
   available: {
@@ -69,6 +71,7 @@ export default function RoomsPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedRoomForShortRest, setSelectedRoomForShortRest] = useState<any>(null);
   const [showShortRestModal, setShowShortRestModal] = useState(false);
+  const [showHotelAuditModal, setShowHotelAuditModal] = useState(false);
   
   const { data: rooms, isLoading } = useRooms({});
   const updateStatus = useUpdateRoomStatus();
@@ -114,41 +117,134 @@ export default function RoomsPage() {
               <h1 className="font-display text-2xl font-medium text-[#2A2622]">Rooms Management</h1>
               <p className="font-body text-sm text-[#8A8377]">Manage your hotel rooms and availability</p>
             </div>
-            <Link
-              href="/rooms/new"
-              className="font-body inline-flex items-center gap-2 px-4 py-2 bg-[#16302B] text-[#F7F1E4] rounded-lg hover:bg-[#1D3B34] transition-colors"
-            >
-              <PlusIcon className="h-5 w-5" />
-              Add New Room
-            </Link>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowHotelAuditModal(true)}
+                className="font-body inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-[#DDD5C4] text-[#16302B] rounded-lg hover:bg-[#F7F1E4] transition-colors text-sm font-medium shadow-sm"
+              >
+                <ShieldCheckIcon className="h-4 w-4 text-[#16302B]" />
+                Security Audit
+              </button>
+              <Link
+                href="/rooms/new"
+                className="font-body inline-flex items-center gap-2 px-4 py-2 bg-[#16302B] text-[#F7F1E4] rounded-lg hover:bg-[#1D3B34] transition-colors text-sm font-medium"
+              >
+                <PlusIcon className="h-4 w-4" />
+                Add New Room
+              </Link>
+            </div>
           </div>
           
+          {/* Housekeeping Alert Banner */}
+          {cleaningRooms > 0 && (
+            <div className="bg-[#E3F2FD] border border-[#90CAF9] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-[#0D47A1] text-white flex items-center justify-center shrink-0">
+                  <SparklesIcon className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="font-display text-sm font-semibold text-[#0D47A1]">
+                    Housekeeping Queue ({cleaningRooms} Room{cleaningRooms > 1 ? 's' : ''})
+                  </h4>
+                  <p className="font-body text-xs text-[#1565C0]">
+                    {cleaningRooms === 1 ? '1 room has' : `${cleaningRooms} rooms have`} been checked out and require cleaning before next guest arrival.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStatusFilter(statusFilter === 'cleaning' ? 'all' : 'cleaning')}
+                className={`font-body text-xs px-3.5 py-1.5 rounded-lg font-medium transition-colors shrink-0 ${
+                  statusFilter === 'cleaning'
+                    ? 'bg-[#0D47A1] text-white'
+                    : 'bg-white text-[#0D47A1] border border-[#90CAF9] hover:bg-[#BBDEFB]'
+                }`}
+              >
+                {statusFilter === 'cleaning' ? 'Showing Cleaning Queue ✓' : 'View Cleaning Queue →'}
+              </button>
+            </div>
+          )}
+
           {/* Stats Overview */}
           <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
-            <div className="bg-white border border-[#DDD5C4] rounded-xl p-4">
+            <button
+              type="button"
+              onClick={() => setStatusFilter('all')}
+              className={`text-left rounded-xl p-4 transition-all border ${
+                statusFilter === 'all'
+                  ? 'bg-white border-[#16302B] ring-2 ring-[#16302B]/20 shadow-sm'
+                  : 'bg-white border-[#DDD5C4] hover:border-[#8A8377]'
+              }`}
+            >
               <p className="font-body text-sm text-[#8A8377] mb-1">Total Rooms</p>
               <p className="font-display text-2xl font-medium text-[#2A2622]">{totalRooms}</p>
-            </div>
-            <div className="bg-white border border-[#DDD5C4] rounded-xl p-4">
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter('available')}
+              className={`text-left rounded-xl p-4 transition-all border ${
+                statusFilter === 'available'
+                  ? 'bg-[#E8F5E9] border-[#2E7D32] ring-2 ring-[#2E7D32]/20 shadow-sm'
+                  : 'bg-white border-[#DDD5C4] hover:border-[#A5D6A7]'
+              }`}
+            >
               <p className="font-body text-sm text-[#8A8377] mb-1">Available</p>
               <p className="font-display text-2xl font-medium text-[#2E7D32]">{availableRooms}</p>
-            </div>
-            <div className="bg-white border border-[#DDD5C4] rounded-xl p-4">
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter('occupied')}
+              className={`text-left rounded-xl p-4 transition-all border ${
+                statusFilter === 'occupied'
+                  ? 'bg-[#FCE4EC] border-[#C62828] ring-2 ring-[#C62828]/20 shadow-sm'
+                  : 'bg-white border-[#DDD5C4] hover:border-[#EF9A9A]'
+              }`}
+            >
               <p className="font-body text-sm text-[#8A8377] mb-1">Occupied</p>
               <p className="font-display text-2xl font-medium text-[#C62828]">{occupiedRooms}</p>
-            </div>
-            <div className="bg-white border border-[#DDD5C4] rounded-xl p-4">
-              <p className="font-body text-sm text-[#8A8377] mb-1">Cleaning</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter('cleaning')}
+              className={`text-left rounded-xl p-4 transition-all border ${
+                statusFilter === 'cleaning'
+                  ? 'bg-[#E3F2FD] border-[#0D47A1] ring-2 ring-[#0D47A1]/20 shadow-sm'
+                  : 'bg-white border-[#DDD5C4] hover:border-[#90CAF9]'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <p className="font-body text-sm text-[#8A8377] mb-1">Cleaning</p>
+                {cleaningRooms > 0 && (
+                  <span className="h-2 w-2 rounded-full bg-[#0D47A1] animate-ping" />
+                )}
+              </div>
               <p className="font-display text-2xl font-medium text-[#0D47A1]">{cleaningRooms}</p>
-            </div>
-            <div className="bg-white border border-[#DDD5C4] rounded-xl p-4">
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter('maintenance')}
+              className={`text-left rounded-xl p-4 transition-all border ${
+                statusFilter === 'maintenance'
+                  ? 'bg-[#FFF3E0] border-[#E65100] ring-2 ring-[#E65100]/20 shadow-sm'
+                  : 'bg-white border-[#DDD5C4] hover:border-[#FFCC80]'
+              }`}
+            >
               <p className="font-body text-sm text-[#8A8377] mb-1">Maintenance</p>
               <p className="font-display text-2xl font-medium text-[#E65100]">{maintenanceRooms}</p>
-            </div>
-            <div className="bg-white border border-[#DDD5C4] rounded-xl p-4">
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter('reserved')}
+              className={`text-left rounded-xl p-4 transition-all border ${
+                statusFilter === 'reserved'
+                  ? 'bg-[#F3E5F5] border-[#6A1B9A] ring-2 ring-[#6A1B9A]/20 shadow-sm'
+                  : 'bg-white border-[#DDD5C4] hover:border-[#CE93D8]'
+              }`}
+            >
               <p className="font-body text-sm text-[#8A8377] mb-1">Reserved</p>
               <p className="font-display text-2xl font-medium text-[#6A1B9A]">{reservedRooms}</p>
-            </div>
+            </button>
           </div>
           
           {/* Search and Filters */}
@@ -319,6 +415,14 @@ export default function RoomsPage() {
             setShowShortRestModal(false);
             setSelectedRoomForShortRest(null);
           }}
+        />
+      )}
+
+      {/* Hotel Wide Security Audit Modal */}
+      {showHotelAuditModal && (
+        <AuditTrailModal
+          room={null}
+          onClose={() => setShowHotelAuditModal(false)}
         />
       )}
     </Layout>

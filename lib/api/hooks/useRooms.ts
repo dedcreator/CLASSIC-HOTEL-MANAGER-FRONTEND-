@@ -2,28 +2,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../client';
 import toast from 'react-hot-toast';
+import { Room, RoomAccessCode, SecurityAuditLog } from '../types';
 
-export interface Room {
-  id: string;
-  room_number: string;
-  room_type: 'standard' | 'deluxe' | 'suite' | 'executive' | 'presidential';
-  room_type_display: string;
-  base_price: number;
-  barcode: string;
-  status: 'available' | 'occupied' | 'maintenance' | 'cleaning' | 'reserved';
-  status_display: string;
-  description: string;
-  capacity: number;
-  name: string;
-  size: number;
-  amenities: string[];
-  rating: number;
-  review_count: number;
-  is_featured: boolean;
-  slug: string;
-  created_at: string;
-  updated_at: string;
-}
+export type { Room, RoomAccessCode, SecurityAuditLog };
 
 export const roomApi = {
   getAll: async (params?: any) => {
@@ -60,6 +41,16 @@ export const roomApi = {
     await api.delete(`/rooms/${id}/`);
   },
 
+  getRoomAccessCodes: async (id: string) => {
+    const { data } = await api.get<RoomAccessCode[]>(`/rooms/${id}/access_codes/`);
+    return data;
+  },
+
+  getRoomAuditLogs: async (id: string) => {
+    const { data } = await api.get<SecurityAuditLog[]>(`/rooms/${id}/audit_logs/`);
+    return data;
+  },
+
   // Public endpoints (no auth required)
   getPublicRooms: async (filters?: {
     status?: string;
@@ -92,6 +83,50 @@ export const roomApi = {
     if (roomType) params.append('room_type', roomType);
     
     const { data } = await api.get(`/rooms/public/availability/?${params.toString()}`);
+    return data;
+  },
+};
+
+export const accessCodeApi = {
+  getAll: async (params?: any) => {
+    const { data } = await api.get<RoomAccessCode[]>('/rooms/access-codes/', { params });
+    return data;
+  },
+
+  createEmergency: async (payload: { room_id: string; booking_id?: string; reason: string }) => {
+    const { data } = await api.post('/rooms/access-codes/create_emergency/', payload);
+    return data;
+  },
+
+  requestCleaning: async (payload: { room_id: string; notes?: string }) => {
+    const { data } = await api.post('/rooms/access-codes/request_cleaning/', payload);
+    return data;
+  },
+
+  approveCleaning: async (id: string) => {
+    const { data } = await api.post(`/rooms/access-codes/${id}/approve_cleaning/`);
+    return data;
+  },
+
+  rejectCleaning: async (id: string) => {
+    const { data } = await api.post(`/rooms/access-codes/${id}/reject_cleaning/`);
+    return data;
+  },
+
+  activateRoom: async (id: string) => {
+    const { data } = await api.post(`/rooms/access-codes/${id}/activate_room/`);
+    return data;
+  },
+
+  verify: async (payload: { code: string; room_id?: string }) => {
+    const { data } = await api.post('/rooms/access-codes/verify/', payload);
+    return data;
+  },
+};
+
+export const auditLogApi = {
+  getAll: async (params?: any) => {
+    const { data } = await api.get<SecurityAuditLog[]>('/rooms/audit-logs/', { params });
     return data;
   },
 };
@@ -138,9 +173,9 @@ export const useUpdateRoom = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: roomApi.update,
-    onSuccess: (data) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
-      queryClient.invalidateQueries({ queryKey: ['room', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['room', variables.id] });
       toast.success('Room updated successfully');
     },
     onError: (error: any) => {
@@ -158,10 +193,11 @@ export const useUpdateRoomStatus = () => {
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
       queryClient.invalidateQueries({ queryKey: ['room', variables.id] });
       queryClient.invalidateQueries({ queryKey: ['rooms', 'available'] });
+      queryClient.invalidateQueries({ queryKey: ['audit-logs'] });
       toast.success(`Room status updated to ${variables.status}`);
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update status');
+      toast.error(error.response?.data?.error || error.response?.data?.message || 'Failed to update status');
     },
   });
 };
@@ -176,6 +212,101 @@ export const useDeleteRoom = () => {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to delete room');
+    },
+  });
+};
+
+// Access Code & Security Hooks
+export const useAccessCodes = (params?: any) => {
+  return useQuery({
+    queryKey: ['access-codes', params],
+    queryFn: () => accessCodeApi.getAll(params),
+  });
+};
+
+export const useAuditLogs = (params?: any) => {
+  return useQuery({
+    queryKey: ['audit-logs', params],
+    queryFn: () => auditLogApi.getAll(params),
+  });
+};
+
+export const useCreateEmergencyKey = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: accessCodeApi.createEmergency,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      queryClient.invalidateQueries({ queryKey: ['access-codes'] });
+      queryClient.invalidateQueries({ queryKey: ['audit-logs'] });
+      toast.success(data.message || '1-Hour Emergency Key generated');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Failed to generate emergency key');
+    },
+  });
+};
+
+export const useRequestCleaningKey = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: accessCodeApi.requestCleaning,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      queryClient.invalidateQueries({ queryKey: ['access-codes'] });
+      queryClient.invalidateQueries({ queryKey: ['audit-logs'] });
+      toast.success(data.message || 'Cleaning key requested');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Failed to request cleaning key');
+    },
+  });
+};
+
+export const useApproveCleaningKey = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: accessCodeApi.approveCleaning,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      queryClient.invalidateQueries({ queryKey: ['access-codes'] });
+      queryClient.invalidateQueries({ queryKey: ['audit-logs'] });
+      toast.success(data.message || 'Cleaning key approved');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Failed to approve cleaning key');
+    },
+  });
+};
+
+export const useRejectCleaningKey = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: accessCodeApi.rejectCleaning,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      queryClient.invalidateQueries({ queryKey: ['access-codes'] });
+      queryClient.invalidateQueries({ queryKey: ['audit-logs'] });
+      toast.success(data.message || 'Cleaning key rejected');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Failed to reject cleaning key');
+    },
+  });
+};
+
+export const useActivateCleanedRoom = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: accessCodeApi.activateRoom,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      queryClient.invalidateQueries({ queryKey: ['access-codes'] });
+      queryClient.invalidateQueries({ queryKey: ['audit-logs'] });
+      toast.success(data.message || 'Room cleaning verified & activated to Available');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Failed to activate room');
     },
   });
 };

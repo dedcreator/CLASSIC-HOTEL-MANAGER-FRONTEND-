@@ -14,9 +14,13 @@ import {
   UserGroupIcon,
   BuildingOfficeIcon,
   LockClosedIcon,
+  KeyIcon,
+  ClipboardDocumentCheckIcon,
+  ClipboardDocumentIcon,
 } from '@heroicons/react/24/outline';
 import { useRooms } from '@/lib/api/hooks/useRooms';
 import { useBooking, useCreateBooking, useCreateGuest, useCheckIn } from '@/lib/api/hooks/useBookings';
+import { RoomAccessCode } from '@/lib/api/types';
 import Layout from '@/components/layout/Layout';
 import toast from 'react-hot-toast';
 
@@ -30,6 +34,9 @@ export default function CheckInPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [paymentLink, setPaymentLink] = useState<string>('');
+  const [completedAccessCode, setCompletedAccessCode] = useState<RoomAccessCode | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'cash' | 'korapay'>('cash');
+  const [codeCopied, setCodeCopied] = useState(false);
 
   // Data fetching
   const { data: rooms, isLoading: roomsLoading } = useRooms({});
@@ -137,25 +144,28 @@ export default function CheckInPage() {
         throw new Error('Booking creation failed');
       }
 
-      // Step 3: Check in with Korapay payment
+      // Step 3: Check in with selected payment method
       const checkInResult = await checkIn.mutateAsync({
         id: booking.id,
         paymentData: {
-          payment_method: 'korapay',
+          payment_method: selectedPaymentMethod,
+          amount_paid: totalAmount,
         },
       });
       
-      if (checkInResult.requires_payment) {
-        // Open payment link in new tab
+      if (checkInResult.requires_payment && checkInResult.payment_link) {
         window.open(checkInResult.payment_link, '_blank');
         toast.success('Booking created! Please complete payment to check in.');
-        // Navigate to bookings page
         setTimeout(() => {
           router.push('/bookings');
         }, 2000);
       } else {
         toast.success('Guest checked in successfully!');
-        router.push('/bookings');
+        if (checkInResult.access_code) {
+          setCompletedAccessCode(checkInResult.access_code);
+        } else {
+          router.push('/bookings');
+        }
       }
       
     } catch (error: any) {
@@ -179,12 +189,12 @@ export default function CheckInPage() {
       const result = await checkIn.mutateAsync({
         id: booking.id,
         paymentData: {
-          payment_method: 'korapay',
+          payment_method: selectedPaymentMethod,
+          amount_paid: booking.total_amount,
         },
       });
       
-      if (result.requires_payment) {
-        // Open payment link in new tab
+      if (result.requires_payment && result.payment_link) {
         window.open(result.payment_link, '_blank');
         toast.success('Please complete payment to check in.');
         setTimeout(() => {
@@ -192,7 +202,11 @@ export default function CheckInPage() {
         }, 2000);
       } else {
         toast.success('Guest checked in successfully!');
-        router.push('/bookings');
+        if (result.access_code) {
+          setCompletedAccessCode(result.access_code);
+        } else {
+          router.push('/bookings');
+        }
       }
     } catch (error: any) {
       console.error('Check-in failed:', error);
@@ -201,6 +215,67 @@ export default function CheckInPage() {
       setIsProcessing(false);
     }
   };
+
+  // Render Access Code Screen upon completion
+  if (completedAccessCode) {
+    return (
+      <Layout>
+        <div className="max-w-md mx-auto py-12 px-4 text-center">
+          <div className="bg-white border border-[#DDD5C4] rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="w-14 h-14 rounded-full bg-[#E8F5E9] text-[#2E7D32] mx-auto flex items-center justify-center">
+              <CheckCircleIcon className="h-8 w-8" />
+            </div>
+            <h2 className="font-display text-2xl font-medium text-[#2A2622]">Check-in Confirmed</h2>
+            <p className="text-xs text-[#5B564B]">
+              Room access code issued. Valid for the stay period + 10 minutes grace period.
+            </p>
+            <div className="bg-[#FAF6EF] border-2 border-[#C9A468] rounded-xl p-5">
+              <span className="text-[11px] font-semibold text-[#8A8377] uppercase tracking-wider block mb-1">
+                Active Check-in Key
+              </span>
+              <div className="font-mono text-3xl font-bold text-[#16302B] tracking-wider my-1 select-all">
+                {completedAccessCode.code}
+              </div>
+              <p className="text-xs text-[#8A8377] mt-1">
+                Expires: {new Date(completedAccessCode.valid_until).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              </p>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(completedAccessCode.code);
+                  setCodeCopied(true);
+                  toast.success('Code copied to clipboard');
+                  setTimeout(() => setCodeCopied(false), 2000);
+                }}
+                className="flex-1 py-2.5 bg-[#16302B] hover:bg-[#1D3B34] text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5"
+              >
+                {codeCopied ? (
+                  <>
+                    <ClipboardDocumentCheckIcon className="h-4 w-4 text-[#A5D6A7]" />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <ClipboardDocumentIcon className="h-4 w-4" />
+                    Copy Code
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/bookings')}
+                className="px-5 py-2.5 border border-[#DDD5C4] hover:bg-[#F7F1E4] text-sm text-[#2A2622] font-medium rounded-lg transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   // Loading state
   if ((bookingId && bookingLoading) || (roomId && roomsLoading)) {
@@ -292,24 +367,38 @@ export default function CheckInPage() {
             
             <div className="p-6">
               <div className="space-y-4">
-                <div className="bg-[#DBEAFE] rounded-lg p-4 border border-[#93C5FD]">
-                  <div className="flex items-center gap-3">
-                    <LockClosedIcon className="h-5 w-5 text-[#1E40AF]" />
-                    <div>
-                      <p className="font-body text-sm font-medium text-[#1E40AF]">Cashless Payment</p>
-                      <p className="font-body text-xs text-[#1E40AF]">Pay securely with Korapay (Card or Bank Transfer)</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPaymentMethod('cash')}
+                    className={`p-4 rounded-xl border text-left transition-all ${
+                      selectedPaymentMethod === 'cash'
+                        ? 'border-[#16302B] bg-[#FAF6EF] ring-2 ring-[#16302B]/20'
+                        : 'border-[#DDD5C4] hover:border-[#8A8377] bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <CreditCardIcon className="h-5 w-5 text-[#16302B]" />
+                      <span className="font-display font-medium text-sm text-[#2A2622]">Front Desk Settlement</span>
                     </div>
-                  </div>
-                </div>
+                    <p className="text-xs text-[#5B564B]">Cash or Hotel POS terminal at desk</p>
+                  </button>
 
-                <div className="bg-[#F7F1E4] rounded-lg p-4 border border-[#DDD5C4]">
-                  <div className="flex items-center gap-3">
-                    <BuildingOfficeIcon className="h-6 w-6 text-[#16302B]" />
-                    <div>
-                      <p className="font-body font-medium text-[#2A2622]">Korapay</p>
-                      <p className="font-body text-sm text-[#5B564B]">Pay with Card or Bank Transfer</p>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPaymentMethod('korapay')}
+                    className={`p-4 rounded-xl border text-left transition-all ${
+                      selectedPaymentMethod === 'korapay'
+                        ? 'border-[#16302B] bg-[#FAF6EF] ring-2 ring-[#16302B]/20'
+                        : 'border-[#DDD5C4] hover:border-[#8A8377] bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <LockClosedIcon className="h-5 w-5 text-[#1E40AF]" />
+                      <span className="font-display font-medium text-sm text-[#2A2622]">Korapay Online</span>
                     </div>
-                  </div>
+                    <p className="text-xs text-[#5B564B]">Direct card link or bank transfer</p>
+                  </button>
                 </div>
 
                 <div className="flex gap-3 pt-4">
@@ -639,24 +728,38 @@ export default function CheckInPage() {
               </h2>
 
               <div className="space-y-6">
-                <div className="bg-[#DBEAFE] rounded-lg p-4 border border-[#93C5FD]">
-                  <div className="flex items-center gap-3">
-                    <LockClosedIcon className="h-5 w-5 text-[#1E40AF]" />
-                    <div>
-                      <p className="font-body text-sm font-medium text-[#1E40AF]">Cashless Payment</p>
-                      <p className="font-body text-xs text-[#1E40AF]">Pay securely with Korapay (Card or Bank Transfer)</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPaymentMethod('cash')}
+                    className={`p-4 rounded-xl border text-left transition-all ${
+                      selectedPaymentMethod === 'cash'
+                        ? 'border-[#16302B] bg-[#FAF6EF] ring-2 ring-[#16302B]/20'
+                        : 'border-[#DDD5C4] hover:border-[#8A8377] bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <CreditCardIcon className="h-5 w-5 text-[#16302B]" />
+                      <span className="font-display font-medium text-sm text-[#2A2622]">Front Desk Settlement</span>
                     </div>
-                  </div>
-                </div>
+                    <p className="text-xs text-[#5B564B]">Cash or Hotel POS terminal at desk</p>
+                  </button>
 
-                <div className="bg-[#F7F1E4] rounded-lg p-4 border border-[#DDD5C4]">
-                  <div className="flex items-center gap-3">
-                    <BuildingOfficeIcon className="h-6 w-6 text-[#16302B]" />
-                    <div>
-                      <p className="font-body font-medium text-[#2A2622]">Korapay</p>
-                      <p className="font-body text-sm text-[#5B564B]">Pay with Card or Bank Transfer</p>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPaymentMethod('korapay')}
+                    className={`p-4 rounded-xl border text-left transition-all ${
+                      selectedPaymentMethod === 'korapay'
+                        ? 'border-[#16302B] bg-[#FAF6EF] ring-2 ring-[#16302B]/20'
+                        : 'border-[#DDD5C4] hover:border-[#8A8377] bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <LockClosedIcon className="h-5 w-5 text-[#1E40AF]" />
+                      <span className="font-display font-medium text-sm text-[#2A2622]">Korapay Online</span>
                     </div>
-                  </div>
+                    <p className="text-xs text-[#5B564B]">Direct card link or bank transfer</p>
+                  </button>
                 </div>
 
                 {/* Summary */}

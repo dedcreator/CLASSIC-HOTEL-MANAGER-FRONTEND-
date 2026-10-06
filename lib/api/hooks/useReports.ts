@@ -412,15 +412,15 @@ export const useInvalidateReports = () => {
  * Hook to export a report with loading state
  */
 export const useExportReport = () => {
-  return async (reportType: string, format: ExportFormat = 'csv', period: string = 'month') => {
+  return async (reportType: string, exportFormat: ExportFormat = 'csv', period: string = 'month') => {
     try {
-      const blob = await reportsApi.exportReport(reportType, format, period);
+      const blob = await reportsApi.exportReport(reportType, exportFormat, period);
       
       // Create download link
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${reportType}_report_${format(new Date(), 'yyyy-MM-dd')}.${format}`;
+      link.download = `${reportType}_report_${format(new Date(), 'yyyy-MM-dd')}.${exportFormat}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

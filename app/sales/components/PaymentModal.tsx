@@ -183,7 +183,7 @@ export default function PaymentModal({
         setBankDetails(bankData);
         setPaymentStatus('idle');
         setIsProcessing(false);
-        toast.info('Bank transfer details generated');
+        toast('Bank transfer details generated', { icon: 'ℹ️' });
         return;
       }
 
@@ -209,7 +209,7 @@ export default function PaymentModal({
         onClose: () => {
           setIsProcessing(false);
           setPaymentStatus('idle');
-          toast.info('Payment cancelled');
+          toast('Payment cancelled', { icon: 'ℹ️' });
         },
         onSuccess: async (response: any) => {
           setPaymentStatus('completed');

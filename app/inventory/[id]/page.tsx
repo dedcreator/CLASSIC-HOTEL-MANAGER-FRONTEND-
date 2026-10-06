@@ -39,7 +39,7 @@ const categoryColors: Record<string, string> = {
   other: 'bg-[#F5F5F5] text-[#616161]',
 };
 
-const locationColors = {
+const locationColors: Record<string, string> = {
   bar: 'bg-[#DBEAFE] text-[#1E40AF]',
   lounge: 'bg-[#FEF3C7] text-[#92400E]',
   both: 'bg-[#F3E8FF] text-[#6B21A5]',

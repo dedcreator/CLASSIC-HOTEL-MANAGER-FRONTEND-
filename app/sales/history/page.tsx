@@ -66,7 +66,7 @@ export default function SalesHistoryPage() {
 
   // Format currency
   const formatCurrency = (amount: number) => {
-    return `₦${amount.toLocaleString(undefined, { minimumFractionPoints: 0, maximumFractionDigits: 0 })}`;
+    return `₦${amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
   };
 
   // Format date

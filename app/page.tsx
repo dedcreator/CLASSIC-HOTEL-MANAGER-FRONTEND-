@@ -311,7 +311,7 @@ export default function Dashboard() {
                   <XAxis dataKey="name" stroke="#8A8377" />
                   <YAxis stroke="#8A8377" />
                   <Tooltip 
-                    formatter={(value: ValueType) => {
+                    formatter={(value: any) => {
                       const numValue = typeof value === 'number' ? value : 0;
                       return [`₦${numValue.toLocaleString()}`, ''];
                     }}
